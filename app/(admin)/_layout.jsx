@@ -2,8 +2,6 @@ import { Redirect, Tabs } from "expo-router";
 import { useAuth } from "../../context/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
 
-import { Stack } from "expo-router";
-
 export default function AdminLayout() {
   const { user, loading } = useAuth();
 
@@ -14,54 +12,81 @@ export default function AdminLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: "#1E6DEB",
-        tabBarInactiveTintColor: "#7A7A7A",
-        headerShown: false,
-        tabBarStyle: {
-          borderTopWidth: 0.5,
-          borderTopColor: "#ddd",
-          paddingBottom: 4,
-          height: 58,
-        },
-      }}
+  tabBarActiveTintColor: "#1E6DEB",
+  tabBarInactiveTintColor: "#7A7A7A",
+  headerShown: false,
+
+  tabBarLabelStyle: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#7A7A7A",
+  },
+
+  tabBarStyle: {
+    borderTopWidth: 0.5,
+    borderTopColor: "#f9f7f7ff",
+    height: 72,
+    paddingTop: 10,
+    paddingBottom: 12,
+  },
+}}
+
     >
       <Tabs.Screen
         name="index"
         options={{
           title: "Dashboard",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? "home" : "home-outline"}
+              size={size}
+              color={focused ? "#059669" : "#7A7A7A"}
+            />
           ),
         }}
       />
+
       <Tabs.Screen
         name="customers"
         options={{
           title: "Customers",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="people-outline" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? "people" : "people-outline"}
+              size={size}
+              color={focused ? "#059669" : "#7A7A7A"}
+            />
           ),
         }}
       />
+
       <Tabs.Screen
         name="leaders"
         options={{
           title: "Leaders",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="ribbon-outline" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? "ribbon" : "ribbon-outline"}
+              size={size}
+              color={focused ? "#059669" : "#7A7A7A"}
+            />
           ),
         }}
       />
+
       <Tabs.Screen
         name="insvestment"
         options={{
           title: "Investments",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="cash-outline" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? "cash" : "cash-outline"}
+              size={size}
+              color={focused ? "#059669" : "#7A7A7A"}
+            />
           ),
         }}
       />
-       
     </Tabs>
   );
 }
