@@ -14,9 +14,11 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "expo-router";
 
 export default function InvestmentsListScreen() {
   const { axiosAuth } = useAuth();
+  const router = useRouter();
 
   const [investments, setInvestments] = useState([]);
   const [filtered, setFiltered] = useState([]);
@@ -157,7 +159,11 @@ export default function InvestmentsListScreen() {
             .padStart(2, "0")}-${d.getFullYear()}`;
 
           return (
-            <TouchableOpacity style={styles.card} activeOpacity={0.7}>
+            <TouchableOpacity
+              onPress={() => router.push(`/insvestment/${item.id}`)}
+              style={styles.card}
+              activeOpacity={0.7}
+            >
               {/* Left Badge */}
               <View
                 style={[
@@ -188,7 +194,7 @@ export default function InvestmentsListScreen() {
                 >
                   <Text style={styles.subText}>Interest: </Text>
 
-                  <Text style={styles.interestText}>{interestPercent}% {" "}</Text>
+                  <Text style={styles.interestText}>{interestPercent}% </Text>
 
                   <Text style={styles.subText}>
                     {" "}
@@ -298,17 +304,12 @@ const styles = StyleSheet.create({
 
   name: { fontSize: 16, fontWeight: "600", color: "#111" },
 
-  emailText: {
-    fontSize: 12,
-    color: "#059669",
-    marginTop: 2,
-    fontWeight: "500",
-  },
+ 
 
   interestText: {
     fontSize: 13,
     fontWeight: "700",
-    color: "#059669",
+    color: "#00C285",
   },
 
   subText: {

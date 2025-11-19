@@ -12,25 +12,24 @@ export default function AdminLayout() {
   return (
     <Tabs
       screenOptions={{
-  tabBarActiveTintColor: "#1E6DEB",
-  tabBarInactiveTintColor: "#7A7A7A",
-  headerShown: false,
+        tabBarActiveTintColor: "#1E6DEB",
+        tabBarInactiveTintColor: "#7A7A7A",
+        headerShown: false,
 
-  tabBarLabelStyle: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#7A7A7A",
-  },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: "600",
+          color: "#7A7A7A",
+        },
 
-  tabBarStyle: {
-    borderTopWidth: 0.5,
-    borderTopColor: "#f9f7f7ff",
-    height: 72,
-    paddingTop: 10,
-    paddingBottom: 12,
-  },
-}}
-
+        tabBarStyle: {
+          borderTopWidth: 0.5,
+          borderTopColor: "#f9f7f7ff",
+          height: 72,
+          paddingTop: 10,
+          paddingBottom: 12,
+        },
+      }}
     >
       <Tabs.Screen
         name="index"
@@ -40,7 +39,7 @@ export default function AdminLayout() {
             <Ionicons
               name={focused ? "home" : "home-outline"}
               size={size}
-              color={focused ? "#059669" : "#7A7A7A"}
+              color={focused ? "#00C285" : "#7A7A7A"}
             />
           ),
         }}
@@ -54,7 +53,7 @@ export default function AdminLayout() {
             <Ionicons
               name={focused ? "people" : "people-outline"}
               size={size}
-              color={focused ? "#059669" : "#7A7A7A"}
+              color={focused ? "#00C285" : "#7A7A7A"}
             />
           ),
         }}
@@ -68,7 +67,7 @@ export default function AdminLayout() {
             <Ionicons
               name={focused ? "ribbon" : "ribbon-outline"}
               size={size}
-              color={focused ? "#059669" : "#7A7A7A"}
+              color={focused ? "#00C285" : "#7A7A7A"}
             />
           ),
         }}
@@ -82,7 +81,7 @@ export default function AdminLayout() {
             <Ionicons
               name={focused ? "cash" : "cash-outline"}
               size={size}
-              color={focused ? "#059669" : "#7A7A7A"}
+              color={focused ? "#00C285" : "#7A7A7A"}
             />
           ),
         }}

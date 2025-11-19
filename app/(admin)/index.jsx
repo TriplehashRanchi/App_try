@@ -11,8 +11,7 @@ import StatsOverview from "@/components/admin/StatsOverview";
 import InvestmentBreakdownCard from "@/components/admin/InvestmentBreakdownCard";
 import LeaderPerformance from "@/components/admin/LeaderPerformance";
 import RecentCustomers from "@/components/admin/RecentCustomers";
-import RecentInvestments from "@/components/admin/RecentInvestments";
-import TodaysInvestments from "@/components/admin/TodaysInvestments";
+ import TodaysInvestments from "@/components/admin/TodaysInvestments";
 
 export default function AdminDashboard() {
   const { axiosAuth, user } = useAuth();
@@ -80,8 +79,8 @@ export default function AdminDashboard() {
         <StatsOverview stats={generalStats} />
         <InvestmentBreakdownCard investments={investments} />
         <TodaysInvestments investments={investments} />
+ 
         <RecentCustomers customers={customers} />
-        <RecentInvestments investments={investments} />
         <LeaderPerformance customers={customers} investments={investments} />
       </ScrollView>
     </SafeAreaView>

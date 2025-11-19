@@ -1,49 +1,35 @@
 import { View, Text, StyleSheet } from "react-native";
-import { FontAwesome5 } from "@expo/vector-icons";
 
 export default function InvestmentBreakdownCard({ investments }) {
   if (!investments?.length) return null;
 
-  const fd = investments.filter(i => i.type === "fd").length;
-  const rd = investments.filter(i => i.type === "rd").length;
-  const fdplus = investments.filter(i => i.type === "fd_plus").length;
+  const fd = investments.filter((i) => i.type === "fd").length;
+  const rd = investments.filter((i) => i.type === "rd").length;
+  const fdplus = investments.filter((i) => i.type === "fd_plus").length;
 
   const items = [
-    {
-      label: "FD",
-      value: fd,
-      icon: "piggy-bank",
-      bg: "#E3F0FF",
-      color: "#2563EB",
-    },
-    {
-      label: "RD",
-      value: rd,
-      icon: "chart-line",
-      bg: "#E7F8EC",
-      color: "#16A34A",
-    },
-    {
-      label: "FD+",
-      value: fdplus,
-      icon: "money-bill-wave",
-      bg: "#FFF4E6",
-      color: "#F59E0B",
-    },
+    { label: "FD", value: fd },
+    { label: "RD", value: rd },
+    { label: "FD +", value: fdplus },
   ];
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Investment Breakdown</Text>
+      {/* Chip */}
+      <View style={styles.chip}>
+        <Text style={styles.chipText}>Investment Breakdown</Text>
+      </View>
 
+      {/* Rows */}
       <View style={styles.row}>
         {items.map((item, idx) => (
-          <View key={idx} style={[styles.card, { backgroundColor: item.bg }]}>
-           
-            <Text style={[styles.value, { color: item.color }]}>
-              {item.value}
-            </Text>
+          <View key={idx} style={styles.col}>
+
+            <Text style={styles.value}>{item.value}</Text>
             <Text style={styles.label}>{item.label}</Text>
+
+            {/* Divider between cols */}
+            {idx !== items.length - 1 && <View style={styles.divider} />}
           </View>
         ))}
       </View>
@@ -54,15 +40,27 @@ export default function InvestmentBreakdownCard({ investments }) {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: "#fff",
-    padding: 16,
-    borderRadius: 12,
+    padding: 18,
+    borderRadius: 14,
     marginBottom: 18,
+    marginTop: 10,
   },
 
-  title: {
-    fontSize: 16,
-    fontWeight: "700",
+  chip: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    backgroundColor: "#F3F4F6",
+    borderRadius: 20,
     marginBottom: 16,
+    marginTop: -32,
+    zIndex: 10,
+  },
+
+  chipText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#555",
   },
 
   row: {
@@ -70,32 +68,32 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
 
-  card: {
+  col: {
     flex: 1,
-    marginHorizontal: 5,
-    borderRadius: 14,
-    paddingVertical: 18,
-    paddingHorizontal: 10,
     alignItems: "center",
-  },
-
-  iconCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 50,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 10,
+    paddingVertical: 8,
+    position: "relative",
   },
 
   value: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "700",
+    color: "#2563EB",
+    marginBottom: 4,
   },
 
   label: {
-    marginTop: 4,
     fontSize: 13,
-    color: "#555",
+    color: "#666",
+    fontWeight: "500",
+  },
+
+  divider: {
+    position: "absolute",
+    right: 0,
+    top: 10,
+    bottom: 10,
+    width: 1,
+    backgroundColor: "#E5E7EB",
   },
 });
