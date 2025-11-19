@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 
-export const API_BASE_URL = "https://bp4lm8pt-5050.inc1.devtunnels.ms/api";
+export const API_BASE_URL = "https://8xkbnlt0-5050.inc1.devtunnels.ms/api";
 
 // Global axios instance
 const axiosAuth = axios.create({
