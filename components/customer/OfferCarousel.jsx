@@ -78,10 +78,8 @@ export default function OffersCarousel() {
                             style={{
                                 width: width - 40,
                                 height: 100,
-                                borderRadius: 20,
-                                marginHorizontal: 10,
                                 resizeMode: "contain",
-                                backgroundColor: "#eee",
+                               
                             }}
                         />
 
