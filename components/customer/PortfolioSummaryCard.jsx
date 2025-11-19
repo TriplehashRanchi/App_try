@@ -24,7 +24,7 @@ export default function PortfolioSummaryCard({ investments }) {
         {/* P&L Row */}
         <View style={styles.row}>
           <Text style={styles.label}>P&L</Text>
-          <Text style={[styles.value, { color: pnl >= 0 ? "#16a34a" : "#dc2626" }]}>
+          <Text style={[styles.value, { color: pnl >= 0 ? "#00C087" : "#dc2626" }]}>
             ₹{pnl.toLocaleString("en-IN")}
           </Text>
         </View>

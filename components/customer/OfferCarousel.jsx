@@ -35,7 +35,7 @@ export default function OffersCarousel() {
         if (offers.length > 1) {
             const timer = setInterval(() => {
                 let nextIndex = (index + 1) % offers.length;
-                console.log("➡️ Scrolling to index:", nextIndex);
+                // console.log("➡️ Scrolling to index:", nextIndex);
 
                 setIndex(nextIndex);
 
