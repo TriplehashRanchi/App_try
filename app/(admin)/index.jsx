@@ -1,17 +1,17 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useEffect, useState } from "react";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 
 // ✅ All imports MUST be default exports
 import DashboardHeader from "@/components/admin/DashboardHeader";
-import StatsOverview from "@/components/admin/StatsOverview";
 import InvestmentBreakdownCard from "@/components/admin/InvestmentBreakdownCard";
 import LeaderPerformance from "@/components/admin/LeaderPerformance";
 import RecentCustomers from "@/components/admin/RecentCustomers";
- import TodaysInvestments from "@/components/admin/TodaysInvestments";
+import StatsOverview from "@/components/admin/StatsOverview";
+import TodaysInvestments from "@/components/admin/TodaysInvestments";
 
 export default function AdminDashboard() {
   const { axiosAuth, user } = useAuth();

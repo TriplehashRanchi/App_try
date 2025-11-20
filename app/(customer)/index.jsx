@@ -9,12 +9,20 @@ import InvestmentList from "@/components/customer/InvestmentList";
 import PortfolioSummaryCard from "@/components/customer/PortfolioSummaryCard";
 import { useAuth } from "@/context/AuthContext";
 import { calculateInvestmentAnalytics } from "@/utils/financeCalculators";
+import { registerForPushNotificationsAsync } from "@/utils/notifications";
 import OffersCarousel from "../../components/customer/OfferCarousel";
+
+
+
 
 export default function DashboardScreen() {
   const { axiosAuth, user } = useAuth();
   const [investments, setInvestments] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+  registerForPushNotificationsAsync().then((t) => console.log("TOKEN:", t));
+}, []);
   
   useEffect(() => {
     const load = async () => {

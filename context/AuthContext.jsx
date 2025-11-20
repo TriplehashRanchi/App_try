@@ -7,6 +7,8 @@ import {
   useEffect,
   useState,
 } from "react";
+import { Platform } from "react-native";
+import { registerForPushNotificationsAsync } from "../utils/notifications";
 
 const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
@@ -32,61 +34,98 @@ export const AuthProvider = ({ children }) => {
   }, [token]);
 
   // Restore token + fetch /auth/me
-  useEffect(() => {
-    const init = async () => {
-      try {
-        const savedToken = await AsyncStorage.getItem(TOKEN_KEY);
+useEffect(() => {
+  const init = async () => {
+    try {
+      const savedToken = await AsyncStorage.getItem(TOKEN_KEY);
 
-        if (savedToken) {
-          setToken(savedToken);
+      if (savedToken) {
+        setToken(savedToken);
 
+        try {
+          const res = await axios.get(`${API_BASE_URL}/auth/me`, {
+            headers: { Authorization: `Bearer ${savedToken}` },
+          });
+
+          console.log("AUTH/ME RESULT:", res.data);
+          setUser(res.data);
+
+          // ⭐⭐⭐ REGISTER PUSH TOKEN ON APP START ⭐⭐⭐
           try {
-            const res = await axios.get(`${API_BASE_URL}/auth/me`, {
-              headers: { Authorization: `Bearer ${savedToken}` },
-            });
+            const expoToken = await registerForPushNotificationsAsync();
 
-            console.log("AUTH/ME RESULT:", res.data);
-            setUser(res.data);
+            if (expoToken) {
+              console.log("Expo Push Token (INIT):", expoToken);
+
+              await axios.create({
+                baseURL: API_BASE_URL,
+                headers: { Authorization: `Bearer ${savedToken}` },
+              }).post("/device/register", {
+                expoPushToken: expoToken,
+                platform: Platform.OS,
+              });
+            }
           } catch (err) {
-            console.log("Token invalid:", err?.response?.data || err.message);
-            await AsyncStorage.removeItem(TOKEN_KEY);
-            setUser(null);
-            setToken(null);
+            console.log("Failed to update push token on init:", err.message);
           }
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
 
-    init();
-  }, []);
+        } catch (err) {
+          console.log("Token invalid:", err?.response?.data || err.message);
+          await AsyncStorage.removeItem(TOKEN_KEY);
+          setUser(null);
+          setToken(null);
+        }
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  init();
+}, []);
+
 
   // LOGIN FUNCTION
-  const login = async (username, password) => {
-    console.log("LOGIN CALL:", username);
+const login = async (username, password) => {
+  console.log("LOGIN CALL:", username);
 
-    const res = await axios.post(`${API_BASE_URL}/auth/login`, {
-      username,
-      password,
-    });
+  const res = await axios.post(`${API_BASE_URL}/auth/login`, {
+    username,
+    password,
+  });
 
-    console.log("LOGIN RESPONSE:", res.data);
+  console.log("LOGIN RESPONSE:", res.data);
 
-    const jwt = res.data.token;
-    const userObj = res.data.user;
+  const jwt = res.data.token;
+  const userObj = res.data.user;
 
-    // Save token
-    await AsyncStorage.setItem(TOKEN_KEY, jwt);
+  // Save token
+  await AsyncStorage.setItem(TOKEN_KEY, jwt);
 
-    // Set state
-    setToken(jwt);
-    setUser(userObj);
+  // Set state
+  setToken(jwt);
+  setUser(userObj);
 
-    console.log("STATE UPDATED. USER:", userObj);
+  console.log("STATE UPDATED. USER:", userObj);
 
-    return userObj; // ⭐ REQUIRED FOR REDIRECT
-  };
+  // ⭐ ⭐ REGISTER DEVICE FOR PUSH NOTIFICATIONS ⭐ ⭐
+  try {
+    const expoPushToken = await registerForPushNotificationsAsync();
+
+    if (expoPushToken) {
+      console.log("Expo Push Token:", expoPushToken);
+      await axiosAuth().post("/device/register", {
+        expoPushToken,
+        platform: Platform.OS,
+      });
+    }
+  } catch (err) {
+    console.log("Push token registration failed:", err.message);
+  }
+
+  return userObj; // ⭐ required for redirect
+};
+
 
   const logout = async () => {
     await AsyncStorage.removeItem(TOKEN_KEY);
