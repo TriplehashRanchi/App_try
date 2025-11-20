@@ -8,6 +8,11 @@
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "extra": {
+      "expo":{
+        "projectId" : "a897288f-2a10-47d6-9e76-e1e6a5770210"
+      }
+    },
     "ios": {
       "supportsTablet": true
     },
