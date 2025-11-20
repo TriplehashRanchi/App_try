@@ -1,5 +1,5 @@
 "use client";
-import { useRouter } from "expo-router";
+
 import { useEffect, useState } from "react";
 import {
   Dimensions,
@@ -8,29 +8,29 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import axiosAuth from "../../utils/axiosAuth";
+import axiosAuth from "../../../../utils/axiosAuth";
+import { useLocalSearchParams, useRouter } from "expo-router";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
-export default function ProfilePage() {
+export default function LeaderProfilePage() {
   const router = useRouter();
+  const { id } = useLocalSearchParams();
   const [profile, setProfile] = useState(null);
 
   useEffect(() => {
     fetchProfile();
-  }, []);
+  }, [id]);
 
   const fetchProfile = async () => {
     try {
-      const res = await axiosAuth.get(
-        "/customers/1263fa59-b87d-408a-8575-33beb8052141"
-      );
+      const res = await axiosAuth.get(`/leaders/${id}/details`);
       setProfile(res.data);
     } catch (err) {
-      console.log("Profile Error:", err);
+      console.log("Leader Profile Error:", err);
     }
   };
 
@@ -45,33 +45,34 @@ export default function ProfilePage() {
   }
 
   const initial =
-    (profile.firstName?.charAt(0) || "") +
-    (profile.lastName?.charAt(0) || "");
+    (profile.firstName?.charAt(0) || "") + (profile.lastName?.charAt(0) || "");
 
   const maskFull = (value) => {
     if (!value) return "N/A";
     return "••••••" + value.slice(-4);
   };
 
-  const maskPan = (value) => {
-    if (!value) return "N/A";
-    return "••••••" + value.slice(-4).toUpperCase();
-  };
+  const BASE = "https://bp4lm8pt-5050.inc1.devtunnels.ms"; // replace as needed
 
-  const BASE = "https://8xkbnlt0-5050.inc1.devtunnels.ms";
-
-  // Calculate total investment
-  const totalInvestment = profile.investments?.reduce(
-    (sum, inv) => sum + (inv.principalAmount || 0),
+  // Total Commission Earned
+  const totalCommission = profile.commissions?.reduce(
+    (sum, c) => sum + (c.commissionAmount || 0),
     0
-  ) || 0;
+  );
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView 
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <View style={styles.mainheader}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backButton}
+          >
+            <Text style={styles.backIcon}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Leader Details</Text>
+          <TouchableOpacity style={styles.shareButton}></TouchableOpacity>
+        </View>
         {/* HEADER */}
         <View style={styles.header}>
           <View style={styles.avatarContainer}>
@@ -79,30 +80,30 @@ export default function ProfilePage() {
               <Text style={styles.avatarText}>{initial}</Text>
             </View>
           </View>
-          
+
           <Text style={styles.name}>
             {profile.firstName} {profile.lastName}
           </Text>
-          
+
           <View style={styles.statusBadge}>
             <View style={styles.statusDot} />
-            <Text style={styles.statusText}>{profile.status.toUpperCase()}</Text>
+            <Text style={styles.statusText}>LEADER</Text>
           </View>
         </View>
 
-        {/* INVESTMENT SUMMARY CARDS */}
+        {/* COMMISSION SUMMARY */}
         <View style={styles.summaryContainer}>
           <View style={[styles.summaryCard, { marginRight: 8 }]}>
-            <Text style={styles.summaryLabel}>Total Invested</Text>
+            <Text style={styles.summaryLabel}>Total Commission</Text>
             <Text style={styles.summaryValue}>
-              ₹{totalInvestment.toLocaleString('en-IN')}
+              ₹{totalCommission.toLocaleString("en-IN")}
             </Text>
           </View>
-          
+
           <View style={[styles.summaryCard, { marginLeft: 8 }]}>
-            <Text style={styles.summaryLabel}>Active Plans</Text>
+            <Text style={styles.summaryLabel}>Referred Users</Text>
             <Text style={styles.summaryValue}>
-              {profile.investments?.filter(i => i.status === 'active').length || 0}
+              {profile.referredCustomers?.length || 0}
             </Text>
           </View>
         </View>
@@ -110,104 +111,51 @@ export default function ProfilePage() {
         {/* PERSONAL INFORMATION */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Personal Information</Text>
-          
+
           <View style={styles.card}>
             <InfoRow label="Email" value={profile.email} />
             <Divider />
-            <InfoRow label="Phone" value={maskFull(profile.phone)} />
+            <InfoRow label="Commission Rate" value={profile.commissionRate} />
             <Divider />
-            <InfoRow label="Address" value={profile.address} />
-            <Divider />
-            <InfoRow label="Username" value={profile.username} />
-          </View>
-        </View>
-
-        {/* KYC DETAILS */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>KYC Details</Text>
-          
-          <View style={styles.card}>
-            <InfoRow label="Aadhar Number" value={maskFull(profile.aadharNumber)} />
-            <Divider />
-            <InfoRow label="PAN Number" value={maskPan(profile.panNumber)} />
+            <InfoRow
+              label="Onboarded"
+              value={new Date(profile.onboardDate).toLocaleDateString("en-IN")}
+            />
           </View>
         </View>
 
         {/* BANK ACCOUNTS */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Bank Accounts</Text>
-          
+
           {profile.bankAccounts?.map((bank, index) => (
-            <View key={bank.id} style={[styles.card, index > 0 && { marginTop: 12 }]}>
+            <View
+              key={bank.id}
+              style={[styles.card, index > 0 && { marginTop: 12 }]}
+            >
               <View style={styles.bankHeader}>
                 <View style={styles.bankIcon}>
                   <Text style={styles.bankIconText}>🏦</Text>
                 </View>
+
                 <View style={{ flex: 1 }}>
                   <Text style={styles.bankName}>{bank.bankName}</Text>
-                  <Text style={styles.bankAccount}>{maskFull(bank.accountNumber)}</Text>
+                  <Text style={styles.bankAccount}>
+                    {maskFull(bank.accountNumber)}
+                  </Text>
                 </View>
               </View>
+
               <Divider />
               <InfoRow label="IFSC Code" value={bank.ifscCode} />
             </View>
           ))}
         </View>
 
-        {/* INVESTMENTS */}
-        {/* <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Investments</Text>
-          
-          {profile.investments?.map((inv, index) => (
-            <View key={inv.id} style={[styles.card, index > 0 && { marginTop: 12 }]}>
-              <View style={styles.investmentHeader}>
-                <View>
-                  <Text style={styles.investmentType}>
-                    {inv.type.toUpperCase().replace('_', ' ')}
-                  </Text>
-                  <Text style={styles.investmentAmount}>
-                    ₹{inv.principalAmount?.toLocaleString('en-IN')}
-                  </Text>
-                </View>
-                <View style={styles.investmentBadge}>
-                  <Text style={styles.investmentRate}>
-                    {(inv.interestRate * 100).toFixed(1)}% p.a.
-                  </Text>
-                </View>
-              </View>
-              <Divider />
-              <View style={styles.investmentDetails}>
-                <View style={styles.investmentDetailItem}>
-                  <Text style={styles.investmentDetailLabel}>Start Date</Text>
-                  <Text style={styles.investmentDetailValue}>
-                    {new Date(inv.startDate).toLocaleDateString('en-IN')}
-                  </Text>
-                </View>
-                {inv.lockInPeriodMonths !== null && (
-                  <View style={styles.investmentDetailItem}>
-                    <Text style={styles.investmentDetailLabel}>Lock-in</Text>
-                    <Text style={styles.investmentDetailValue}>
-                      {inv.lockInPeriodMonths} months
-                    </Text>
-                  </View>
-                )}
-                {inv.rdPeriodMonths !== null && (
-                  <View style={styles.investmentDetailItem}>
-                    <Text style={styles.investmentDetailLabel}>Period</Text>
-                    <Text style={styles.investmentDetailValue}>
-                      {inv.rdPeriodMonths} months
-                    </Text>
-                  </View>
-                )}
-              </View>
-            </View>
-          ))}
-        </View> */}
-
         {/* DOCUMENTS */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Documents</Text>
-          
+
           <View style={styles.documentsGrid}>
             {profile.documents?.map((doc) => (
               <View key={doc.id} style={styles.documentCard}>
@@ -217,21 +165,11 @@ export default function ProfilePage() {
                   resizeMode="cover"
                 />
                 <Text style={styles.documentLabel}>
-                  {doc.type ? doc.type.replace(/_/g, ' ').toUpperCase() : 'DOCUMENT'}
+                  {doc.type?.replace(/_/g, " ").toUpperCase()}
                 </Text>
               </View>
             ))}
           </View>
-        </View>
-
-        {/* ACCOUNT CLOSURE */}
-        <View style={styles.section}>
-          <TouchableOpacity style={styles.dangerCard}>
-            <Text style={styles.dangerTitle}>Close Account</Text>
-            <Text style={styles.dangerText}>
-              Permanently delete your account and all associated data
-            </Text>
-          </TouchableOpacity>
         </View>
 
         <View style={{ height: 40 }} />
@@ -253,6 +191,7 @@ function Divider() {
   return <View style={styles.divider} />;
 }
 
+// ⭐ IMPORTANT: Do not change styling (copied exactly from your customer page)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -273,10 +212,47 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  mainheader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    backgroundColor: "#fff",
+  },
+
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  backIcon: {
+    fontSize: 24,
+    color: "#222",
+  },
+
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#222",
+  },
+
+  shareButton: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  shareIcon: {
+    fontSize: 20,
+    color: "#222",
+  },
 
   header: {
     alignItems: "center",
-    paddingTop: 24,
     paddingBottom: 20,
     backgroundColor: "#fff",
   },

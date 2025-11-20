@@ -1,5 +1,5 @@
 "use client";
-import { useRouter } from "expo-router";
+
 import { useEffect, useState } from "react";
 import {
   Dimensions,
@@ -8,26 +8,26 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import axiosAuth from "../../utils/axiosAuth";
+import axiosAuth from "../../../../utils/axiosAuth";
+import { useLocalSearchParams, useRouter } from "expo-router";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
 export default function ProfilePage() {
   const router = useRouter();
+  const { id } = useLocalSearchParams();
   const [profile, setProfile] = useState(null);
 
   useEffect(() => {
     fetchProfile();
-  }, []);
+  }, [id]);
 
   const fetchProfile = async () => {
     try {
-      const res = await axiosAuth.get(
-        "/customers/1263fa59-b87d-408a-8575-33beb8052141"
-      );
+      const res = await axiosAuth.get(`/customers/${id}`);
       setProfile(res.data);
     } catch (err) {
       console.log("Profile Error:", err);
@@ -45,8 +45,7 @@ export default function ProfilePage() {
   }
 
   const initial =
-    (profile.firstName?.charAt(0) || "") +
-    (profile.lastName?.charAt(0) || "");
+    (profile.firstName?.charAt(0) || "") + (profile.lastName?.charAt(0) || "");
 
   const maskFull = (value) => {
     if (!value) return "N/A";
@@ -58,20 +57,31 @@ export default function ProfilePage() {
     return "••••••" + value.slice(-4).toUpperCase();
   };
 
-  const BASE = "https://8xkbnlt0-5050.inc1.devtunnels.ms";
+  const BASE = "https://bp4lm8pt-5050.inc1.devtunnels.ms";
 
   // Calculate total investment
-  const totalInvestment = profile.investments?.reduce(
-    (sum, inv) => sum + (inv.principalAmount || 0),
-    0
-  ) || 0;
+  const totalInvestment =
+    profile.investments?.reduce(
+      (sum, inv) => sum + (inv.principalAmount || 0),
+      0
+    ) || 0;
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
       >
+        <View style={styles.mainheader}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backButton}
+          >
+            <Text style={styles.backIcon}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Customer Details</Text>
+          <TouchableOpacity style={styles.shareButton}></TouchableOpacity>
+        </View>
         {/* HEADER */}
         <View style={styles.header}>
           <View style={styles.avatarContainer}>
@@ -79,14 +89,16 @@ export default function ProfilePage() {
               <Text style={styles.avatarText}>{initial}</Text>
             </View>
           </View>
-          
+
           <Text style={styles.name}>
             {profile.firstName} {profile.lastName}
           </Text>
-          
+
           <View style={styles.statusBadge}>
             <View style={styles.statusDot} />
-            <Text style={styles.statusText}>{profile.status.toUpperCase()}</Text>
+            <Text style={styles.statusText}>
+              {profile.status.toUpperCase()}
+            </Text>
           </View>
         </View>
 
@@ -95,14 +107,15 @@ export default function ProfilePage() {
           <View style={[styles.summaryCard, { marginRight: 8 }]}>
             <Text style={styles.summaryLabel}>Total Invested</Text>
             <Text style={styles.summaryValue}>
-              ₹{totalInvestment.toLocaleString('en-IN')}
+              ₹{totalInvestment.toLocaleString("en-IN")}
             </Text>
           </View>
-          
+
           <View style={[styles.summaryCard, { marginLeft: 8 }]}>
             <Text style={styles.summaryLabel}>Active Plans</Text>
             <Text style={styles.summaryValue}>
-              {profile.investments?.filter(i => i.status === 'active').length || 0}
+              {profile.investments?.filter((i) => i.status === "active")
+                .length || 0}
             </Text>
           </View>
         </View>
@@ -110,7 +123,7 @@ export default function ProfilePage() {
         {/* PERSONAL INFORMATION */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Personal Information</Text>
-          
+
           <View style={styles.card}>
             <InfoRow label="Email" value={profile.email} />
             <Divider />
@@ -125,9 +138,12 @@ export default function ProfilePage() {
         {/* KYC DETAILS */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>KYC Details</Text>
-          
+
           <View style={styles.card}>
-            <InfoRow label="Aadhar Number" value={maskFull(profile.aadharNumber)} />
+            <InfoRow
+              label="Aadhar Number"
+              value={maskFull(profile.aadharNumber)}
+            />
             <Divider />
             <InfoRow label="PAN Number" value={maskPan(profile.panNumber)} />
           </View>
@@ -136,16 +152,21 @@ export default function ProfilePage() {
         {/* BANK ACCOUNTS */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Bank Accounts</Text>
-          
+
           {profile.bankAccounts?.map((bank, index) => (
-            <View key={bank.id} style={[styles.card, index > 0 && { marginTop: 12 }]}>
+            <View
+              key={bank.id}
+              style={[styles.card, index > 0 && { marginTop: 12 }]}
+            >
               <View style={styles.bankHeader}>
                 <View style={styles.bankIcon}>
                   <Text style={styles.bankIconText}>🏦</Text>
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.bankName}>{bank.bankName}</Text>
-                  <Text style={styles.bankAccount}>{maskFull(bank.accountNumber)}</Text>
+                  <Text style={styles.bankAccount}>
+                    {maskFull(bank.accountNumber)}
+                  </Text>
                 </View>
               </View>
               <Divider />
@@ -207,7 +228,7 @@ export default function ProfilePage() {
         {/* DOCUMENTS */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Documents</Text>
-          
+
           <View style={styles.documentsGrid}>
             {profile.documents?.map((doc) => (
               <View key={doc.id} style={styles.documentCard}>
@@ -217,7 +238,9 @@ export default function ProfilePage() {
                   resizeMode="cover"
                 />
                 <Text style={styles.documentLabel}>
-                  {doc.type ? doc.type.replace(/_/g, ' ').toUpperCase() : 'DOCUMENT'}
+                  {doc.type
+                    ? doc.type.replace(/_/g, " ").toUpperCase()
+                    : "DOCUMENT"}
                 </Text>
               </View>
             ))}
@@ -273,10 +296,47 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  mainheader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    backgroundColor: "#fff",
+  },
+
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  backIcon: {
+    fontSize: 24,
+    color: "#222",
+  },
+
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#222",
+  },
+
+  shareButton: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  shareIcon: {
+    fontSize: 20,
+    color: "#222",
+  },
 
   header: {
     alignItems: "center",
-    paddingTop: 24,
     paddingBottom: 20,
     backgroundColor: "#fff",
   },

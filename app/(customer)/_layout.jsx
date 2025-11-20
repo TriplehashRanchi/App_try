@@ -1,7 +1,8 @@
+import Feather from '@expo/vector-icons/Feather';
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { Tabs } from "expo-router";
+import { Redirect, Tabs } from "expo-router";
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useAuth } from "../../context/AuthContext";
-import { Redirect } from "expo-router";
 
 export default function CustomerLayout() {
   const { user, loading } = useAuth();
@@ -12,6 +13,7 @@ if (user.primaryRole !== "customer") return <Redirect href="/login" />;
 
 
   return (
+     <GestureHandlerRootView style={{ flex: 1 }}>
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: "#1E6DEB",
@@ -40,7 +42,7 @@ if (user.primaryRole !== "customer") return <Redirect href="/login" />;
         options={{
           title: "Profile",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" size={size} color={color} />
+            <Feather name="user" size={24} color="#808080ff" />
           ),
         }}
       />
@@ -55,5 +57,6 @@ if (user.primaryRole !== "customer") return <Redirect href="/login" />;
         }}
       />
     </Tabs>
+    </GestureHandlerRootView>
   );
 }
