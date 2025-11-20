@@ -14,67 +14,76 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/context/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 
-export default function LeadersListScreen() {
+export default function CustomersListScreen() {
   const { axiosAuth } = useAuth();
+  const router = useRouter();
 
-  const [leaders, setLeaders] = useState([]);
+  const [customers, setCustomers] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState("");
-  const [level, setLevel] = useState("all");
+  const [status, setStatus] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
-    loadLeaders();
+    load();
   }, []);
 
-  // Fetch Leaders
-  const loadLeaders = async () => {
+  const load = async () => {
     try {
-      const res = await axiosAuth().get("/leaders", {
-        params: {
-          page: 1,
-          limit: 9999,
-        },
-      });
-
+      const res = await axiosAuth().get("/customers?limit=9999");
       const data = res.data.data || [];
 
-      const formatted = data.map((l) => ({
-        ...l,
-        initials: `${l.firstName?.[0] || ""}${l.lastName?.[0] || ""}`.toUpperCase(),
+      const formatted = data.map((c) => ({
+        ...c,
+        initials: `${c.firstName?.[0] || ""}${
+          c.lastName?.[0] || ""
+        }`.toUpperCase(),
       }));
 
-      setLeaders(formatted);
+      setCustomers(formatted);
       setFiltered(formatted);
     } catch (err) {
-      console.log("Leaders Fetch Error:", err);
+      console.log("Fetch Error:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Apply Filters
+  // Handle Filters
   useEffect(() => {
-    let list = [...leaders];
+    let list = [...customers];
 
     if (search.trim()) {
       const s = search.toLowerCase();
-      list = list.filter((l) =>
-        `${l.firstName} ${l.lastName} ${l.email}`
-          .toLowerCase()
-          .includes(s)
+      list = list.filter((c) =>
+        `${c.firstName} ${c.lastName} ${c.email}`.toLowerCase().includes(s)
       );
     }
 
-    if (level !== "all") {
-      list = list.filter((l) => l.level === level);
+    if (status !== "all") {
+      list = list.filter((c) => c.status === status);
     }
 
     setFiltered(list);
-  }, [search, level, leaders]);
+  }, [search, status, customers]);
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case "active":
+        return { icon: "checkmark-circle", color: "#059669" }; // green
+      case "pending_onboarding":
+        return { icon: "time", color: "#D97706" }; // amber
+      case "inactive":
+      case "blocked":
+        return { icon: "close-circle", color: "#EF4444" }; // red
+      default:
+        return { icon: "help-circle", color: "#6B7280" }; // gray
+    }
+  };
 
   if (loading) {
     return (
@@ -90,7 +99,7 @@ export default function LeadersListScreen() {
 
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Leaders</Text>
+        <Text style={styles.headerTitle}>Customers</Text>
       </View>
 
       {/* Search Row */}
@@ -98,7 +107,7 @@ export default function LeadersListScreen() {
         <View style={styles.searchBar}>
           <Ionicons name="search" size={18} color="#9CA3AF" />
           <TextInput
-            placeholder="Search leaders..."
+            placeholder="Search customers..."
             value={search}
             onChangeText={setSearch}
             style={styles.input}
@@ -106,7 +115,7 @@ export default function LeadersListScreen() {
           />
         </View>
 
-        {/* Filter Icon */}
+        {/* Filter Button */}
         <TouchableOpacity
           style={styles.filterButton}
           onPress={() => setShowFilters((prev) => !prev)}
@@ -124,21 +133,21 @@ export default function LeadersListScreen() {
         <View style={styles.filterRow}>
           {[
             { key: "all", label: "All" },
-            { key: "L1", label: "L1" },
-            { key: "L2", label: "L2" },
+            { key: "active", label: "Active" },
+            { key: "pending_onboarding", label: "Pending" },
           ].map((f) => (
             <TouchableOpacity
               key={f.key}
-              onPress={() => setLevel(f.key)}
+              onPress={() => setStatus(f.key)}
               style={[
                 styles.filterChip,
-                level === f.key && styles.filterChipActive,
+                status === f.key && styles.filterChipActive,
               ]}
             >
               <Text
                 style={[
                   styles.filterText,
-                  level === f.key && styles.filterTextActive,
+                  status === f.key && styles.filterTextActive,
                 ]}
               >
                 {f.label}
@@ -152,28 +161,44 @@ export default function LeadersListScreen() {
       <FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
-        ItemSeparatorComponent={() => <View style={styles.divider} />}
         contentContainerStyle={{ paddingVertical: 6 }}
-        renderItem={({ item }) => (
-          <TouchableOpacity style={styles.card} activeOpacity={0.7}>
-            {/* Avatar */}
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{item.initials}</Text>
-            </View>
+        ItemSeparatorComponent={() => <View style={styles.divider} />}
+        renderItem={({ item }) => {
+          const { icon, color } = getStatusIcon(item.status);
 
-            {/* Info */}
-            <View style={{ flex: 1 }}>
-              <Text style={styles.name}>
-                {item.firstName} {item.lastName}
-              </Text>
-              <Text style={styles.subText}>{item.email}</Text>
-              <Text style={styles.levelTag}>Level: {item.level}</Text>
-            </View>
+          return (
+            <TouchableOpacity
+              onPress={() => router.push(`customers/${item.id}`)}
+              style={styles.card}
+              activeOpacity={0.6}
+            >
+              {/* Avatar */}
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>{item.initials}</Text>
+              </View>
 
-            {/* Chevron */}
-            <Ionicons name="chevron-forward" size={20} color="#D1D5DB" />
-          </TouchableOpacity>
-        )}
+              {/* Name + Status Icon */}
+              <View style={{ flex: 1 }}>
+                <View
+                  style={{ flexDirection: "row", alignItems: "center", gap: 2 }}
+                >
+                  <Text style={styles.name}>
+                    {item.firstName} {item.lastName}
+                  </Text>
+
+                  {/* ⭐ Status Icon beside name */}
+                  <Ionicons name={icon} size={14} color={color} />
+                </View>
+
+                <Text style={styles.subText}>
+                  Referred by: {item.leaderName ? item.leaderName : "Direct"}
+                </Text>
+              </View>
+
+              <Ionicons name="chevron-forward" size={20} color="#D1D5DB" />
+            </TouchableOpacity>
+          );
+        }}
       />
     </SafeAreaView>
   );
@@ -181,7 +206,6 @@ export default function LeadersListScreen() {
 
 const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
-
   container: { flex: 1, backgroundColor: "#F9FAFB", paddingHorizontal: 18 },
 
   header: { paddingVertical: 10 },
@@ -203,7 +227,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     height: 44,
   },
-
   input: { flex: 1, marginLeft: 8, fontSize: 15, color: "#111" },
 
   filterButton: {
@@ -249,16 +272,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginRight: 14,
   },
-
   avatarText: { color: "#4338CA", fontWeight: "700", fontSize: 16 },
 
   name: { fontSize: 16, fontWeight: "600", color: "#111" },
-  subText: { fontSize: 12, color: "#6B7280", marginTop: 2 },
-
-  levelTag: {
-    fontSize: 12,
-    color: "#2563EB",
-    marginTop: 4,
-    fontWeight: "600",
-  },
+  subText: { fontSize: 12, color: "#2563EB", marginTop: 2, fontWeight: "600" },
 });
