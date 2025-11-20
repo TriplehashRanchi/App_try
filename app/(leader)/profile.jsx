@@ -1,5 +1,6 @@
 "use client";
 
+import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import {
   Dimensions,
@@ -7,6 +8,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -16,7 +18,7 @@ import axiosAuth from "../../utils/axiosAuth";
 const { width } = Dimensions.get("window");
 
 export default function LeaderProfilePage() {
-  const { user } = useAuth();
+  const { user,logout } = useAuth();
   const leaderId = user?.id;
 
   const [profile, setProfile] = useState(null);
@@ -182,6 +184,29 @@ export default function LeaderProfilePage() {
           ))}
         </View>
 
+        <TouchableOpacity
+               onPress={logout}
+               style={{
+                 flexDirection: "row",
+                 alignItems: "center",
+                 padding: 14,
+                 backgroundColor: "#FF3B30",
+                 borderRadius: 10,
+                 marginTop: 20,
+               }}
+             >
+               <Ionicons name="log-out-outline" size={22} color="#fff" />
+               <Text
+                 style={{
+                   color: "white",
+                   fontSize: 16,
+                   fontWeight: "600",
+                   marginLeft: 10,
+                 }}
+               >
+                 Logout
+               </Text>
+             </TouchableOpacity>
         <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
