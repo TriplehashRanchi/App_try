@@ -117,6 +117,8 @@ export default function InvestmentDetails() {
   const [loading, setLoading] = useState(true);
   const [selectedTenure, setSelectedTenure] = useState(12);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [withdrawalRequested, setWithdrawalRequested] = useState(false);
+
 
   const handleWithdrawalRequest = async () => {
     try {
@@ -133,6 +135,20 @@ export default function InvestmentDetails() {
     }
   };
 
+  const checkExistingWithdrawal = async () => {
+  try {
+    const res = await auth().get(`/withdrawal-requests/by-investment/${id}`);
+
+    // find request with pending or approved
+    const req = res.data.find(
+      r => r.status === "pending" || r.status === "approved"
+    );
+
+    setWithdrawalRequested(!!req);
+  } catch (err) {
+    console.log("Failed to check existing withdrawal:", err);
+  }
+};
   useEffect(() => {
     if (investment) {
       const defaultTenure =
@@ -148,19 +164,23 @@ export default function InvestmentDetails() {
     fetchInvestment();
   }, [id]);
 
-  const fetchInvestment = async () => {
-    setLoading(true);
-    try {
-      const res = await auth().get(`/investments/${id}`);
-      setInvestment(res.data);
-      console.log(res.data);
-    } catch (err) {
-      console.log("❌ Fetch error:", err);
-      router.push("/customer/dashboard");
-    } finally {
-      setLoading(false);
-    }
-  };
+const fetchInvestment = async () => {
+  setLoading(true);
+  try {
+    const res = await auth().get(`/investments/${id}`);
+    setInvestment(res.data);
+
+    // 🔥 CHECK WITHDRAWAL STATUS HERE
+    checkExistingWithdrawal();
+
+  } catch (err) {
+    console.log("❌ Fetch error:", err);
+    router.push("/customer/dashboard");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const monthsPassed = investment
     ? getMonthsDiff(investment.activationDate, new Date().toISOString())
@@ -648,13 +668,22 @@ export default function InvestmentDetails() {
         <View style={styles.actionButtons}>
           {/* WITHDRAW BUTTON — Only for FD + unlocked */}
           {investment.type === "fd" && calc.status === "Unlocked" && (
-            <TouchableOpacity
-              style={styles.primaryButton}
-              onPress={handleWithdrawalRequest}
-            >
-              <Text style={styles.primaryButtonText}>Withdraw</Text>
-            </TouchableOpacity>
-          )}
+  withdrawalRequested ? (
+    <View style={[styles.primaryButton, { backgroundColor: "#d1d5db" }]}>
+      <Text style={[styles.primaryButtonText, { color: "#555" }]}>
+         Requested
+      </Text>
+    </View>
+  ) : (
+    <TouchableOpacity
+      style={styles.primaryButton}
+      onPress={handleWithdrawalRequest}
+    >
+      <Text style={styles.primaryButtonText}>Withdraw</Text>
+    </TouchableOpacity>
+  )
+)}
+
 
           {/* ADD NEW — always visible */}
           <TouchableOpacity

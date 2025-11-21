@@ -17,7 +17,7 @@ export default function AdminLayout() {
         headerShown: false,
 
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 10,
           fontWeight: "600",
           color: "#7A7A7A",
         },
@@ -80,6 +80,19 @@ export default function AdminLayout() {
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons
               name={focused ? "cash" : "cash-outline"}
+              size={size}
+              color={focused ? "#00C285" : "#7A7A7A"}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="meeting"
+        options={{
+          title: "Meetings",
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? "calendar" : "calendar-outline"}
               size={size}
               color={focused ? "#00C285" : "#7A7A7A"}
             />

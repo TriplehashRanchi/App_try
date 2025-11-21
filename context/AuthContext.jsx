@@ -1,3 +1,4 @@
+import { registerForPushNotificationsAsync } from "@/utils/notifications";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import {
@@ -7,8 +8,7 @@ import {
   useEffect,
   useState,
 } from "react";
-import { Platform } from "react-native";
-import { registerForPushNotificationsAsync } from "../utils/notifications";
+import { Platform } from "react-native"; // also missing
 
 const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
@@ -33,6 +33,33 @@ export const AuthProvider = ({ children }) => {
     });
   }, [token]);
 
+  useEffect(() => {
+  const savePushToken = async () => {
+    if (!user || !token) return;
+
+    console.log("🔄 Registering push token for logged in user:", user.id);
+
+    const expoPushToken = await registerForPushNotificationsAsync();
+    if (!expoPushToken) return;
+
+    console.log("📲 Expo Push Token:", expoPushToken);
+
+    try {
+      await axiosAuth().post("/device/register", {
+        expoPushToken,
+        platform: Platform.OS,
+      });
+
+      console.log("✅ Push token saved successfully");
+    } catch (err) {
+      console.log("❌ Failed to save push token:", err.response?.data || err.message);
+    }
+  };
+
+  savePushToken();
+}, [user, token]);
+
+
   // Restore token + fetch /auth/me
 useEffect(() => {
   const init = async () => {
@@ -49,25 +76,6 @@ useEffect(() => {
 
           console.log("AUTH/ME RESULT:", res.data);
           setUser(res.data);
-
-          // ⭐⭐⭐ REGISTER PUSH TOKEN ON APP START ⭐⭐⭐
-          try {
-            const expoToken = await registerForPushNotificationsAsync();
-
-            if (expoToken) {
-              console.log("Expo Push Token (INIT):", expoToken);
-
-              await axios.create({
-                baseURL: API_BASE_URL,
-                headers: { Authorization: `Bearer ${savedToken}` },
-              }).post("/device/register", {
-                expoPushToken: expoToken,
-                platform: Platform.OS,
-              });
-            }
-          } catch (err) {
-            console.log("Failed to update push token on init:", err.message);
-          }
 
         } catch (err) {
           console.log("Token invalid:", err?.response?.data || err.message);
@@ -107,21 +115,6 @@ const login = async (username, password) => {
   setUser(userObj);
 
   console.log("STATE UPDATED. USER:", userObj);
-
-  // ⭐ ⭐ REGISTER DEVICE FOR PUSH NOTIFICATIONS ⭐ ⭐
-  try {
-    const expoPushToken = await registerForPushNotificationsAsync();
-
-    if (expoPushToken) {
-      console.log("Expo Push Token:", expoPushToken);
-      await axiosAuth().post("/device/register", {
-        expoPushToken,
-        platform: Platform.OS,
-      });
-    }
-  } catch (err) {
-    console.log("Push token registration failed:", err.message);
-  }
 
   return userObj; // ⭐ required for redirect
 };

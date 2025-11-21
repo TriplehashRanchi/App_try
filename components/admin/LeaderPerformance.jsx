@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 15,
     fontWeight: "600",
-    marginBottom: 3,
+ 
   },
 
   subRow: {

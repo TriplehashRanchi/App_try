@@ -12,7 +12,7 @@ export default function RecentCustomers({ customers }) {
   const getStatusIcon = (status) => {
     switch (status) {
       case "active":
-        return { icon: "checkmark-circle", color: "#059669" };
+        return { icon: "checkmark-circle", color: "#00C285" };
       case "pending_onboarding":
         return { icon: "time", color: "#D97706" }; // orange
       case "inactive":
@@ -130,6 +130,5 @@ const styles = StyleSheet.create({
   email: {
     fontSize: 12,
     color: "#6B7280",
-    marginTop: 2,
-  },
+   },
 });

@@ -11,11 +11,12 @@ import InvestmentBreakdownCard from "@/components/admin/InvestmentBreakdownCard"
 import LeaderPerformance from "@/components/admin/LeaderPerformance";
 import RecentCustomers from "@/components/admin/RecentCustomers";
 import StatsOverview from "@/components/admin/StatsOverview";
-import TodaysInvestments from "@/components/admin/TodaysInvestments";
+import TodaysInvestments from "@/components/admin/TodaysInvestments"; 
+ import UpcomingMeetings from "@/components/admin/UpcomingMeetings";
 
 export default function AdminDashboard() {
   const { axiosAuth, user } = useAuth();
-
+const [upcomingMeetings, setUpcomingMeetings] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [investments, setInvestments] = useState([]);
   const [generalStats, setGeneralStats] = useState(null);
@@ -72,6 +73,21 @@ export default function AdminDashboard() {
     load();
   }, []);
 
+
+  useEffect(() => {
+  const fetchMeetings = async () => {
+    try {
+      const { data } = await axiosAuth().get('/meetings', {
+        params: { status: 'scheduled', limit: 3 },
+      });
+       setUpcomingMeetings(data);
+    } catch (err) {
+      console.error('Error fetching upcoming meetings:', err.message);
+    }
+  };
+  fetchMeetings();
+}, [axiosAuth]);
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -79,7 +95,7 @@ export default function AdminDashboard() {
         <StatsOverview stats={generalStats} />
         <InvestmentBreakdownCard investments={investments} />
         <TodaysInvestments investments={investments} />
- 
+        <UpcomingMeetings meetings={upcomingMeetings} />
         <RecentCustomers customers={customers} />
         <LeaderPerformance customers={customers} investments={investments} />
       </ScrollView>
