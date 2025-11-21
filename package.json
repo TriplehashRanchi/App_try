@@ -57,6 +57,9 @@
 =======
     "react-native-svg": "15.12.1",
     "react-native-toast-message": "^2.3.3",
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
     "react-native-wagmi-charts": "^2.8.3",
     "react-native-web": "~0.21.0",
