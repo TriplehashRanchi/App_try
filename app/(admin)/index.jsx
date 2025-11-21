@@ -10,13 +10,9 @@ import DashboardHeader from "@/components/admin/DashboardHeader";
 import InvestmentBreakdownCard from "@/components/admin/InvestmentBreakdownCard";
 import LeaderPerformance from "@/components/admin/LeaderPerformance";
 import RecentCustomers from "@/components/admin/RecentCustomers";
-<<<<<<< Updated upstream
 import StatsOverview from "@/components/admin/StatsOverview";
 import TodaysInvestments from "@/components/admin/TodaysInvestments";
-=======
- import TodaysInvestments from "@/components/admin/TodaysInvestments";
->>>>>>> Stashed changes
-import UpcomingMeetings from "../../components/admin/UpcomingMeetings";
+ import UpcomingMeetings from "@/components/admin/UpcomingMeetings";
 
 export default function AdminDashboard() {
   const { axiosAuth, user } = useAuth();
