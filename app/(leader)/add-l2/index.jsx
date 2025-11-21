@@ -22,7 +22,7 @@ import * as Yup from "yup";
 // --- Imports ---
 import { INDIAN_BANKS } from "@/constants/banks";
 // Make sure your UploadSheet is saved in components/leader/UploadSheet.jsx
-import UploadSheet from "@/components/leader/UploadSheet";
+import GenericUploadWidgetRN from "@/components/leader/GenericUploadWidgetRN";
 
 // ====================================================================
 // 1. COMPONENTS (Inputs & Rows)
@@ -234,11 +234,24 @@ export default function AddL2LeaderPage() {
 
   // Handle upload success from Sheet
   const handleUploadSuccess = (type, url) => {
-    // Map generic types to specific state keys if needed, or stick to simple mapping
-    // type coming from sheet: 'aadharFront', 'pan', etc.
-    setUploads((prev) => ({ ...prev, [`${type}Url`]: url }));
-    setUploadType(null); // Close sheet
+  const keyMap = {
+    aadharFront: "aadharFrontUrl",
+    aadharBack: "aadharBackUrl",
+    pan: "panUrl",
+    passbook: "bankProofUrl", // ⭐ FIX HERE
   };
+  console.log("Upload Success:", type, url);
+
+  const correctKey = keyMap[type];
+  if (!correctKey) return console.warn("Unknown upload type:", type);
+console.log("Correct Key:", correctKey);
+  setUploads((prev) => ({
+    ...prev,
+    [correctKey]: url,
+  }));
+
+  setUploadType(null);
+};
 
   // --- FORMIK SETUP ---
   const formik = useFormik({
@@ -273,14 +286,17 @@ export default function AddL2LeaderPage() {
 
         // 1. Create Leader via API
         const { data } = await axiosAuth().post("/leaders/l2", payload);
-
-        if (data.leaderCode) {
-          setLeaderId(data.leaderCode);
+        if (data.leaderId) {
+          setLeaderId(data.leaderId);
         } else {
-          Alert.alert("Error", "Server did not return leader ID.");
+          Alert.alert("Error", "Server did not return leaderId.");
           return;
         }
-        Alert.alert("Success", "L2 Leader Created! Please upload the required documents now.");
+
+        Alert.alert(
+          "Success",
+          "L2 Leader Created! Please upload the required documents now."
+        );
       } catch (err) {
         console.error(err);
         Alert.alert(
@@ -578,15 +594,34 @@ export default function AddL2LeaderPage() {
           onSelect={(bank) => formik.setFieldValue("bankName", bank)}
         />
 
-        {uploadType && (
-          <UploadSheet
-            type={uploadType}
-            // IMPORTANT: We pass the NEW leaderId here so docs attach to the correct person
-            customerId={leaderId}
-            onClose={() => setUploadType(null)}
-            onSuccess={handleUploadSuccess}
-          />
-        )}
+        <GenericUploadWidgetRN
+          visible={!!uploadType}
+          onClose={() => setUploadType(null)}
+          label={
+            uploadType === "aadharFront"
+              ? "Upload Aadhaar Front"
+              : uploadType === "aadharBack"
+              ? "Upload Aadhaar Back"
+              : uploadType === "pan"
+              ? "Upload PAN Card"
+              : "Upload Bank Proof"
+          }
+          endpoint={
+            uploadType
+              ? `/leaders/upload?leaderId=${leaderId}&type=${
+                  uploadType === "aadharFront"
+                    ? "aadhar_front"
+                    : uploadType === "aadharBack"
+                    ? "aadhar_back"
+                    : uploadType === "pan"
+                    ? "pan"
+                    : "passbook"
+                }`
+              : ""
+          }
+          type={uploadType} // <-- ADD THIS
+          onSuccess={handleUploadSuccess} // <-- FIX THIS
+        />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

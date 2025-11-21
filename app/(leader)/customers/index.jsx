@@ -190,7 +190,7 @@ export default function LeaderCustomersPage() {
 
           return (
             <TouchableOpacity
-              onPress={() => router.push(`/customers/${item.id}`)}
+              onPress={() => router.push(`/(leader)/customers/${item.id}`)}
               activeOpacity={0.7}
               style={styles.card}
             >

@@ -1,12 +1,11 @@
 import ShareModal from "@/components/leader/ShareModal";
 import { useAuth } from "@/context/AuthContext";
 import { Feather, Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { router, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
-  Image,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -15,31 +14,51 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import OffersCarousel from "../../components/customer/OfferCarousel";
+import OverviewStats from "../../components/leader/OverviewStats";
 
 const { width } = Dimensions.get("window");
 
-// --- COMPONENTS ---
+const PrimaryStatCard = ({ label, value, secondaryLabel, secondaryValue }) => {
+  const router = useRouter();
 
-// 1. Primary Highlight Card (Earnings)
-const PrimaryStatCard = ({ label, value, secondaryLabel, secondaryValue }) => (
-  <View style={styles.primaryCard}>
-    <View>
-      <Text style={styles.primaryLabel}>{label}</Text>
-      <Text style={styles.primaryValue}>
-        ₹{(value || 0).toLocaleString("en-IN")}
-      </Text>
-    </View>
-    <View style={styles.primaryDivider} />
-    <View style={styles.primaryFooter}>
-      <Text style={styles.secondaryLabel}>{secondaryLabel}</Text>
-      <Text style={styles.secondaryValue}>
-        ₹{(secondaryValue || 0).toLocaleString("en-IN")}
-      </Text>
-    </View>
-    {/* Decorative Circle */}
-    <View style={styles.decorativeCircle} />
-  </View>
-);
+  return (
+    <TouchableOpacity
+      activeOpacity={0.85}
+      onPress={() => router.push("/(leader)/commissions")}
+      style={styles.primaryCard}
+    >
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <View>
+          <Text style={styles.primaryLabel}>{label}</Text>
+          <Text style={styles.primaryValue}>
+            ₹{(value || 0).toLocaleString("en-IN")}
+          </Text>
+        </View>
+        <Ionicons
+          name="arrow-forward-circle"
+          size={26}
+          color="rgba(255,255,255,0.85)"
+          style={{ marginLeft: 10, marginTop: -50 }}
+        />
+      </View>
+      <View style={styles.primaryDivider} />
+      <View style={styles.primaryFooter}>
+        <Text style={styles.secondaryLabel}>{secondaryLabel}</Text>
+        <Text style={styles.secondaryValue}>
+          ₹{(secondaryValue || 0).toLocaleString("en-IN")}
+        </Text>
+      </View>
+      <View style={styles.decorativeCircle} />
+    </TouchableOpacity>
+  );
+};
 
 // 2. Grid Stat Card
 const GridStatCard = ({ icon, label, value, color }) => (
@@ -135,7 +154,7 @@ export default function LeaderDashboard() {
               Hello, {user?.username?.split(" ")[0] || "Leader"} 👋
             </Text>
             <Text style={styles.subGreeting}>
-              Let's track your growth today.
+              Lets track your growth today.
             </Text>
           </View>
           <TouchableOpacity style={styles.notificationBtn}>
@@ -152,58 +171,27 @@ export default function LeaderDashboard() {
           secondaryValue={pendingCommissionAmount}
         />
 
-        {/* QUICK ACTIONS / STATS GRID */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Overview</Text>
-        </View>
-
-        <View style={styles.gridContainer}>
-          <GridStatCard
-            icon={<Feather name="users" size={20} color="#1E6DEB" />}
-            label="Customers"
-            value={totalCustomersReferred}
-            color="#1E6DEB"
-          />
-          <GridStatCard
-            icon={<Feather name="user-check" size={20} color="#10B981" />}
-            label="Active Investors"
-            value={totalCustomers}
-            color="#10B981"
-          />
-          <GridStatCard
-            icon={<Feather name="briefcase" size={20} color="#F59E0B" />}
-            label="Investments"
-            value={totalInvestments}
-            color="#F59E0B"
-          />
-          <GridStatCard
-            icon={<Feather name="trending-up" size={20} color="#8B5CF6" />}
-            label="Total Volume"
-            value={`₹${(totalInvestmentValue / 1000).toFixed(1)}k`}
-            color="#8B5CF6"
-          />
-        </View>
-
-        {/* OFFERS BANNER */}
-        {offers.length > 0 && (
-          <View style={styles.bannerContainer}>
-            <Image
-              source={{
-                uri: `https://8xkbnlt0-5050.inc1.devtunnels.ms${offers[currentBanner]?.imageUrl}`,
-              }}
-              style={styles.bannerImage}
-            />
-            <View style={styles.bannerOverlay}></View>
-          </View>
-        )}
+        <OverviewStats
+          totalCustomersReferred={totalCustomersReferred}
+          totalCustomers={totalCustomers}
+          totalInvestments={totalInvestments}
+          totalInvestmentValue={totalInvestmentValue}
+        />
 
         {/* RECENT REFERRALS LIST */}
-        <View style={styles.listContainer}>
-          <View style={styles.listHeader}>
-            <Text style={styles.sectionTitle}>Recent Referrals</Text>
-
-            <TouchableOpacity onPress={() => router.push("/customers")}>
-              <Text style={styles.viewAllText}>View All</Text>
+        <View style={styles.referralContainer}>
+          <View style={styles.referralChip}>
+            <Text style={styles.referralChipText}>Recent Referrals</Text>
+          </View>
+          <View style={styles.listHeaderRow}>
+            <Text style={styles.spacer} />
+            <TouchableOpacity
+              onPress={() => router.push("/(leader)/customers")}
+              style={{ flexDirection: "row", alignItems: "center" }}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.viewAllMinimal}>View All</Text>
+              <Ionicons name="chevron-forward" size={16} color="#1E6DEB" />
             </TouchableOpacity>
           </View>
 
@@ -230,7 +218,7 @@ export default function LeaderDashboard() {
               return (
                 <TouchableOpacity
                   key={c.id}
-                  onPress={() => router.push(`/customers/${c.id}`)}
+                  onPress={() => router.push(`/(leader)/customers/${c.id}`)}
                   activeOpacity={0.7}
                   style={[
                     styles.listItem,
@@ -289,6 +277,8 @@ export default function LeaderDashboard() {
             </View>
           )}
         </View>
+      <OffersCarousel />
+
       </ScrollView>
 
       <ShareModal
@@ -349,13 +339,13 @@ const styles = StyleSheet.create({
 
   // PRIMARY CARD
   primaryCard: {
-    backgroundColor: "#1E6DEB", // Brand Blue
-    borderRadius: 24,
-    padding: 24,
+    backgroundColor: "#1E6DEB",
+    borderRadius: 12,
+    padding: 20,
     marginBottom: 30,
     shadowColor: "#1E6DEB",
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.25,
     shadowRadius: 12,
     elevation: 8,
     position: "relative",
@@ -402,103 +392,75 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
   },
+  // LIST
 
-  // GRID STATS
-  sectionHeader: {
-    marginBottom: 16,
+  referralContainer: {
+    marginTop: 10,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 12,
+    padding: 15,
+    paddingTop: 28,
+    backgroundColor: "#FAFAFA",
+    position: "relative",
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#111827",
-  },
-  gridContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    marginBottom: 24,
-  },
-  gridCard: {
-    width: "48%",
+
+  // Small chip title (Zerodha-style)
+  referralChip: {
+    position: "absolute",
+    top: -14,
+    left: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 5,
     backgroundColor: "#fff",
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 16,
-    // Subtle Shadow
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
+    borderRadius: 20,
     elevation: 2,
   },
-  iconContainer: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  gridValue: {
-    fontSize: 20,
+  referralChipText: {
+    fontSize: 13,
     fontWeight: "700",
-    color: "#1F2937",
+    color: "#333",
   },
-  gridLabel: {
-    fontSize: 12,
-    color: "#6B7280",
-    marginTop: 4,
-    fontWeight: "500",
-  },
-
-  // BANNER
-  bannerContainer: {
-    height: 160,
-    borderRadius: 20,
-    overflow: "cover",
-    marginBottom: 30,
-    backgroundColor: "#eee",
-  },
-  bannerImage: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
-  },
-  bannerOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.1)",
-    padding: 16,
-    justifyContent: "space-between",
+  listHeaderRow: {
     flexDirection: "row",
-    alignItems: "flex-start",
-  },
-  bannerTag: {
-    backgroundColor: "rgba(0,0,0,0.6)",
-    color: "#fff",
-    fontSize: 11,
-    fontWeight: "600",
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 20,
-    overflow: "hidden",
-  },
-  shareBtn: {
-    backgroundColor: "rgba(255,255,255,0.2)",
-    padding: 8,
-    borderRadius: 20,
-    backdropFilter: "blur(10px)",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    marginBottom: 6,
   },
 
-  // LIST
+  spacer: { flex: 1 },
+
+  viewAllMinimal: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#1E6DEB",
+    marginRight: 3,
+  },
+
+  // Premium header button
+  viewAllButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(30,109,235,0.08)",
+    paddingHorizontal: 14, // increased
+    paddingVertical: 7, // increased
+    borderRadius: 10,
+    marginRight: -2,
+    marginLeft: 10,
+    marginTop: -50, // push right slightly
+  },
+
+  viewAllButtonText: {
+    color: "#1E6DEB",
+    fontSize: 14,
+    fontWeight: "700",
+    marginRight: 4,
+  },
+
   listContainer: {
-    backgroundColor: "#fff",
-    borderRadius: 20,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
+    borderRadius: 10,
+    padding: 10,
   },
   listHeader: {
     flexDirection: "row",
@@ -508,33 +470,31 @@ const styles = StyleSheet.create({
   },
   viewAllText: {
     color: "#1E6DEB",
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "600",
   },
   listItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 12,
+    paddingVertical: 15,
     borderBottomWidth: 1,
     borderBottomColor: "#F3F4F6",
   },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#F3F4F6",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#E0E7FF",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 12,
+    marginRight: 14,
   },
-  avatarText: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#4B5563",
-  },
+  avatarText: { color: "#4338CA", fontWeight: "700", fontSize: 16 },
   listContent: {
     flex: 1,
   },
+  name: { fontSize: 16, fontWeight: "600", color: "#111" },
+  subText: { fontSize: 12, color: "#2563EB", marginTop: 2, fontWeight: "600" },
   listTitle: {
     fontSize: 15,
     fontWeight: "600",

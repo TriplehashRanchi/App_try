@@ -1,3 +1,5 @@
+import UploadSheet from "@/components/leader/UploadSheet";
+import { INDIAN_BANKS } from "@/constants/banks";
 import { useAuth } from "@/context/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -9,6 +11,7 @@ import {
   Modal,
   Platform,
   ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -16,196 +19,44 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-// --- Imports ---
-import UploadSheet from "@/components/leader/UploadSheet";
-import { INDIAN_BANKS } from "@/constants/banks";
-
-// --- 1. Premium Input Component (Defined Outside to fix Keyboard Bugs) ---
-const PremiumInput = ({
-  label,
-  value,
-  onChangeText,
-  placeholder,
-  onBlur,
-  keyboardType = "default",
-  maxLength,
-  error,
-}) => (
-  <View style={{ marginBottom: 20 }}>
-    <Text
-      style={{
-        fontSize: 12,
-        fontWeight: "600",
-        marginBottom: 8,
-        color: "#6b7280",
-        textTransform: "uppercase",
-        letterSpacing: 0.5,
-      }}
-    >
-      {label}
-    </Text>
-    <TextInput
-      placeholder={placeholder}
-      placeholderTextColor="#9ca3af"
-      value={value}
-      onChangeText={onChangeText}
-      onBlur={onBlur}
-      keyboardType={keyboardType}
-      maxLength={maxLength}
-      autoCapitalize={
-        maxLength === 10 || maxLength === 11 ? "characters" : "none"
-      }
-      style={{
-        backgroundColor: "#fff",
-        paddingVertical: 14,
-        paddingHorizontal: 16,
-        borderRadius: 12,
-        fontSize: 16,
-        borderWidth: 1.5,
-        borderColor: error ? "#ef4444" : "#e5e7eb",
-        color: "#111",
-      }}
-    />
-    {error && (
-      <View
-        style={{ flexDirection: "row", marginTop: 6, alignItems: "center" }}
-      >
-        <Ionicons name="alert-circle" size={14} color="#ef4444" />
-        <Text style={{ color: "#ef4444", fontSize: 12, marginLeft: 4 }}>
-          {error}
-        </Text>
-      </View>
-    )}
+// --- Components ---
+const ProgressBar = ({ step }) => (
+  <View style={styles.progressContainer}>
+    <View style={styles.progressTrack}>
+      <View style={[styles.progressFill, { width: `${step * 33.3}%` }]} />
+    </View>
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+        <Text style={styles.progressText}>Verification</Text>
+        <Text style={styles.progressText}>Step {step}/3</Text>
+    </View>
   </View>
 );
 
-// --- 2. Upload Row Component ---
-const UploadRow = ({ label, url, onPress, icon = "cloud-upload-outline" }) => (
-  <TouchableOpacity
-    onPress={onPress}
-    activeOpacity={0.7}
-    style={{
-      flexDirection: "row",
-      alignItems: "center",
-      backgroundColor: url ? "#f0fdf4" : "#f9fafb",
-      padding: 16,
-      borderRadius: 12,
-      marginBottom: 12,
-      borderWidth: 1,
-      borderColor: url ? "#86efac" : "#e5e7eb",
-      borderStyle: url ? "solid" : "dashed",
-    }}
-  >
-    <View
-      style={{
-        width: 42,
-        height: 42,
-        borderRadius: 21,
-        backgroundColor: url ? "#22c55e" : "#e5e7eb",
-        alignItems: "center",
-        justifyContent: "center",
-        marginRight: 12,
-      }}
-    >
-      <Ionicons
-        name={url ? "checkmark" : icon}
-        size={20}
-        color={url ? "#fff" : "#6b7280"}
-      />
+const InputLabel = ({ label, error }) => (
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+        <Text style={styles.label}>{label}</Text>
+        {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
-    <View style={{ flex: 1 }}>
-      <Text style={{ fontSize: 15, fontWeight: "600", color: "#1f2937" }}>
-        {label}
-      </Text>
-      <Text
-        style={{
-          fontSize: 13,
-          color: url ? "#15803d" : "#6b7280",
-          marginTop: 2,
-        }}
-      >
-        {url ? "Document Uploaded" : "Tap to upload"}
-      </Text>
-    </View>
-    {url && <Ionicons name="eye-outline" size={20} color="#15803d" />}
-  </TouchableOpacity>
 );
 
-// --- 3. Bank Modal Component ---
-const BankPickerModal = ({ visible, onClose, onSelect }) => {
-  const [search, setSearch] = useState("");
-  const filteredBanks = useMemo(
-    () =>
-      INDIAN_BANKS.filter((b) =>
-        b.toLowerCase().includes(search.toLowerCase())
-      ),
-    [search]
-  );
-
-  return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
-    >
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
-        <View
-          style={{
-            padding: 16,
-            borderBottomWidth: 1,
-            borderColor: "#f3f4f6",
-            flexDirection: "row",
-            alignItems: "center",
-          }}
-        >
-          <TouchableOpacity onPress={onClose} style={{ padding: 4 }}>
-            <Ionicons name="close" size={28} color="#111" />
-          </TouchableOpacity>
-          <Text style={{ fontSize: 18, fontWeight: "700", marginLeft: 12 }}>
-            Select Bank
-          </Text>
-        </View>
-        <View style={{ padding: 16 }}>
-          <TextInput
-            style={{
-              backgroundColor: "#f3f4f6",
-              padding: 14,
-              borderRadius: 12,
-              fontSize: 16,
-            }}
-            placeholder="Search bank name..."
-            placeholderTextColor="#9ca3af"
-            value={search}
-            onChangeText={setSearch}
-          />
-        </View>
-        <FlatList
-          data={filteredBanks}
-          keyExtractor={(item) => item}
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{ paddingBottom: 40 }}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              onPress={() => {
-                onSelect(item);
-                onClose();
-              }}
-              style={{
-                padding: 16,
-                borderBottomWidth: 1,
-                borderColor: "#f9fafb",
-              }}
-            >
-              <Text style={{ fontSize: 16, color: "#374151" }}>{item}</Text>
-            </TouchableOpacity>
-          )}
-        />
-      </SafeAreaView>
-    </Modal>
-  );
+const UploadBox = ({ label, url, onPress, type }) => {
+    const isUploaded = !!url;
+    return (
+        <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={[styles.uploadBox, isUploaded && styles.uploadBoxSuccess]}>
+            <View style={[styles.iconCircle, isUploaded && styles.iconCircleSuccess]}>
+                <Ionicons name={isUploaded ? "checkmark" : "cloud-upload-outline"} size={20} color={isUploaded ? "#fff" : "#6B7280"} />
+            </View>
+            <View style={{ flex: 1 }}>
+                <Text style={styles.uploadLabel}>{label}</Text>
+                <Text style={[styles.uploadSub, isUploaded && { color: '#16A34A' }]}>
+                    {isUploaded ? "Document attached" : "Tap to upload"}
+                </Text>
+            </View>
+            {isUploaded && <Ionicons name="eye-outline" size={20} color="#16A34A" />}
+        </TouchableOpacity>
+    );
 };
 
-// --- MAIN SCREEN ---
 export default function AddCustomerStep2() {
   const params = useLocalSearchParams();
   const router = useRouter();
@@ -213,388 +64,274 @@ export default function AddCustomerStep2() {
 
   // State
   const [form, setForm] = useState({
-    customerId: params.customerId,
-    bankName: "",
-    accountNumber: "",
-    ifscCode: "",
-    aadharNumber: "",
-    panNumber: "",
-    aadharFrontUrl: "",
-    aadharBackUrl: "",
-    panUrl: "",
-    passbookUrl: "",
+    bankName: "", accountNumber: "", ifscCode: "",
+    aadharNumber: "", panNumber: "",
+    aadharFrontUrl: "", aadharBackUrl: "", panUrl: "", passbookUrl: "",
   });
 
   const [uploadType, setUploadType] = useState(null);
   const [bankModalVisible, setBankModalVisible] = useState(false);
-  const [kycWarnings, setKycWarnings] = useState({
-    aadhar: false,
-    pan: false,
-    account: false,
-  });
-  const [validating, setValidating] = useState(false);
+  const [bankSearch, setBankSearch] = useState("");
+  
+  // Validation State
+  const [kycErrors, setKycErrors] = useState({});
+  const [isValidating, setIsValidating] = useState(false);
 
-  // Callback for UploadSheet
-  const handleUploadSuccess = (type, url) => {
-    setForm((prev) => ({ ...prev, [`${type}Url`]: url }));
-    setUploadType(null);
-  };
+  const filteredBanks = useMemo(() => INDIAN_BANKS.filter(b => b.toLowerCase().includes(bankSearch.toLowerCase())), [bankSearch]);
 
-  // KYC Duplicate Check
-  const checkKyc = async () => {
-    if (!form.aadharNumber && !form.panNumber && !form.accountNumber) return;
+  // --- API: Check KYC (Crucial for Trust) ---
+ // --- Inside AddCustomerStep2 component ---
 
-    setValidating(true);
+  const validateKyc = async () => {
+    // 1. Don't call API if fields are empty or too short
+    if (
+       (!form.aadharNumber || form.aadharNumber.length < 12) && 
+       (!form.panNumber || form.panNumber.length < 10) && 
+       (!form.accountNumber || form.accountNumber.length < 5)
+    ) {
+       return; 
+    }
+
+    setIsValidating(true);
     try {
-      const query = new URLSearchParams({
-        aadhar: form.aadharNumber || "",
-        pan: form.panNumber || "",
-        account: form.accountNumber || "",
-        ifsc: form.ifscCode || "",
-      });
+      // 2. Only send parameters that actually have values
+      const params = {};
+      if (form.aadharNumber && form.aadharNumber.length === 12) params.aadhar = form.aadharNumber;
+      if (form.panNumber && form.panNumber.length === 10) params.pan = form.panNumber;
+      if (form.accountNumber && form.accountNumber.length > 5) params.account = form.accountNumber;
+      if (form.ifscCode) params.ifsc = form.ifscCode;
+
+      const query = new URLSearchParams(params).toString();
+      
+      // If we have nothing valid to check, stop.
+      if (!query) {
+          setIsValidating(false);
+          return;
+      }
 
       const res = await axiosAuth().get(`/customers/check-kyc?${query}`);
-
-      setKycWarnings({
-        aadhar: res.data.aadharExists,
-        pan: res.data.panExists,
-        account: res.data.accountExists,
+      
+      setKycErrors({
+        aadhar: res.data.aadharExists ? "Already registered" : null,
+        pan: res.data.panExists ? "Already registered" : null,
+        account: res.data.accountExists ? "Already registered" : null,
       });
-    } catch (err) {
-      console.log(
-        "KYC Check:",
-        err.response?.status === 400 ? "Incomplete Data" : err
-      );
+
+    } catch (error) {
+      // 3. Handle 400 cleanly so it doesn't crash or spam logs
+      if (error.response && error.response.status === 400) {
+         console.log("KYC Input invalid yet, waiting for user to finish typing...");
+      } else {
+         console.log("KYC Check System Error", error);
+      }
     } finally {
-      setValidating(false);
+      setIsValidating(false);
     }
   };
 
-  // Form Validation
-  const isComplete =
-    form.bankName?.length > 0 &&
-    form.accountNumber?.length > 5 &&
-    form.ifscCode?.length > 4 &&
-    form.aadharNumber?.length === 12 &&
-    form.panNumber?.length === 10 &&
-    form.passbookUrl &&
-    (form.aadharFrontUrl || form.aadharBackUrl) &&
-    form.panUrl &&
-    !kycWarnings.aadhar &&
-    !kycWarnings.account;
-
-  const goNext = () => {
-    router.push({
-      pathname: "/(leader)/add-customer/step3",
-      params: { ...params, ...form },
-    });
+  const handleNext = () => {
+      // Pass all data (Step 1 params + Step 2 form) to Step 3
+      router.push({
+          pathname: "/(leader)/add-customer/step3",
+          params: { ...params, ...form }
+      });
   };
 
+  const isFormValid = 
+    form.bankName && form.accountNumber?.length > 5 && form.ifscCode?.length > 4 &&
+    form.aadharNumber?.length === 12 && form.panNumber?.length === 10 &&
+    form.passbookUrl && form.aadharFrontUrl && form.aadharBackUrl && form.panUrl &&
+    !kycErrors.aadhar && !kycErrors.pan && !kycErrors.account;
+
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#F3F4F6" }}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1 }}
-      >
-        {/* HEADER */}
-        <View
-          style={{
-            backgroundColor: "#fff",
-            paddingHorizontal: 20,
-            paddingVertical: 15,
-            borderBottomWidth: 1,
-            borderColor: "#e5e7eb",
-          }}
-        >
-          <Text style={{ fontSize: 22, fontWeight: "800", color: "#111" }}>
-            Verification
-          </Text>
-          <View
-            style={{ flexDirection: "row", marginTop: 8, alignItems: "center" }}
-          >
-            <View
-              style={{
-                height: 4,
-                flex: 1,
-                backgroundColor: "#e5e7eb",
-                borderRadius: 2,
-              }}
-            >
-              <View
-                style={{
-                  width: "66%",
-                  height: "100%",
-                  backgroundColor: "#2563eb",
-                  borderRadius: 2,
-                }}
-              />
-            </View>
-            <Text
-              style={{
-                marginLeft: 10,
-                fontSize: 12,
-                color: "#6b7280",
-                fontWeight: "600",
-              }}
-            >
-              Step 2/3
-            </Text>
-          </View>
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
+        
+        {/* Header */}
+        <View style={styles.header}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+                <Ionicons name="arrow-back" size={24} color="#1F2937" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Bank & KYC</Text>
+            {isValidating && <ActivityIndicator size="small" color="#2563EB" />}
         </View>
 
-        <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 100 }}>
-          {/* BANK DETAILS CARD */}
-          <View
-            style={{
-              backgroundColor: "#fff",
-              padding: 20,
-              borderRadius: 16,
-              marginBottom: 20,
-              shadowColor: "#000",
-              shadowOpacity: 0.05,
-              shadowRadius: 8,
-              elevation: 2,
-            }}
-          >
-            <View
-              style={{
-                flexDirection: "row",
-                marginBottom: 20,
-                alignItems: "center",
-              }}
-            >
-              <View
-                style={{
-                  padding: 8,
-                  backgroundColor: "#eff6ff",
-                  borderRadius: 8,
-                  marginRight: 12,
-                }}
-              >
-                <Ionicons name="business" size={20} color="#2563eb" />
-              </View>
-              <Text
-                style={{ fontSize: 18, fontWeight: "700", color: "#1f2937" }}
-              >
-                Bank Details
-              </Text>
+        <ProgressBar step={2} />
+
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            
+            {/* Card 1: Bank Details */}
+            <View style={styles.card}>
+                <View style={styles.cardHeaderRow}>
+                    <View style={styles.cardIconBg}><Ionicons name="business" size={18} color="#2563EB" /></View>
+                    <Text style={styles.cardTitle}>Banking Information</Text>
+                </View>
+
+                {/* Bank Dropdown */}
+                <View style={{ marginBottom: 16 }}>
+                    <Text style={styles.label}>Bank Name</Text>
+                    <TouchableOpacity onPress={() => setBankModalVisible(true)} style={styles.dropdown}>
+                        <Text style={[styles.inputText, !form.bankName && { color: '#9CA3AF' }]}>
+                            {form.bankName || "Select Bank"}
+                        </Text>
+                        <Ionicons name="chevron-down" size={20} color="#6B7280" />
+                    </TouchableOpacity>
+                </View>
+
+                <View style={{ marginBottom: 16 }}>
+                    <InputLabel label="Account Number" error={kycErrors.account} />
+                    <TextInput 
+                        style={[styles.input, kycErrors.account && styles.inputError]} 
+                        placeholder="Enter Account Number" 
+                        value={form.accountNumber}
+                        onChangeText={v => setForm({...form, accountNumber: v})}
+                        onBlur={validateKyc}
+                        keyboardType="numeric"
+                    />
+                </View>
+
+                <View style={{ marginBottom: 16 }}>
+                    <InputLabel label="IFSC Code" />
+                    <TextInput 
+                        style={styles.input} 
+                        placeholder="e.g. SBIN0001234" 
+                        value={form.ifscCode}
+                        onChangeText={v => setForm({...form, ifscCode: v.toUpperCase()})}
+                        maxLength={11}
+                        autoCapitalize="characters"
+                    />
+                </View>
+
+                <UploadBox label="Upload Passbook/Cheque" url={form.passbookUrl} onPress={() => setUploadType('passbook')} />
             </View>
 
-            {/* Custom Dropdown Trigger */}
-            <View style={{ marginBottom: 20 }}>
-              <Text
-                style={{
-                  fontSize: 12,
-                  fontWeight: "600",
-                  marginBottom: 8,
-                  color: "#6b7280",
-                  textTransform: "uppercase",
-                }}
-              >
-                Bank Name
-              </Text>
-              <TouchableOpacity
-                onPress={() => setBankModalVisible(true)}
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  backgroundColor: "#fff",
-                  padding: 16,
-                  borderRadius: 12,
-                  borderWidth: 1.5,
-                  borderColor: "#e5e7eb",
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: 16,
-                    color: form.bankName ? "#111" : "#9ca3af",
-                  }}
-                >
-                  {form.bankName || "Select Bank"}
-                </Text>
-                <Ionicons name="chevron-down" size={20} color="#6b7280" />
-              </TouchableOpacity>
+            {/* Card 2: Identity */}
+            <View style={styles.card}>
+                <View style={styles.cardHeaderRow}>
+                    <View style={styles.cardIconBg}><Ionicons name="id-card" size={18} color="#2563EB" /></View>
+                    <Text style={styles.cardTitle}>Identity Verification</Text>
+                </View>
+
+                <View style={{ marginBottom: 16 }}>
+                    <InputLabel label="Aadhar Number" error={kycErrors.aadhar} />
+                    <TextInput 
+                        style={[styles.input, kycErrors.aadhar && styles.inputError]} 
+                        placeholder="12-Digit Aadhar Number" 
+                        value={form.aadharNumber}
+                        onChangeText={v => setForm({...form, aadharNumber: v})}
+                        onBlur={validateKyc}
+                        keyboardType="numeric"
+                        maxLength={12}
+                    />
+                </View>
+
+                <View style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}>
+                    <View style={{ flex: 1 }}>
+                        <UploadBox label="Aadhar Front" url={form.aadharFrontUrl} onPress={() => setUploadType('aadharFront')} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                        <UploadBox label="Aadhar Back" url={form.aadharBackUrl} onPress={() => setUploadType('aadharBack')} />
+                    </View>
+                </View>
+
+                <View style={{ marginBottom: 16 }}>
+                    <InputLabel label="PAN Number" error={kycErrors.pan} />
+                    <TextInput 
+                        style={[styles.input, kycErrors.pan && styles.inputError]} 
+                        placeholder="10-Digit PAN Number" 
+                        value={form.panNumber}
+                        onChangeText={v => setForm({...form, panNumber: v.toUpperCase()})}
+                        onBlur={validateKyc}
+                        maxLength={10}
+                        autoCapitalize="characters"
+                    />
+                </View>
+                
+                <UploadBox label="Upload PAN Card" url={form.panUrl} onPress={() => setUploadType('pan')} />
             </View>
 
-            <PremiumInput
-              label="Account Number"
-              placeholder="Enter Account No"
-              value={form.accountNumber}
-              onChangeText={(v) => setForm({ ...form, accountNumber: v })}
-              onBlur={checkKyc}
-              keyboardType="numeric"
-              error={kycWarnings.account ? "Account already registered" : null}
-            />
-
-            <PremiumInput
-              label="IFSC Code"
-              placeholder="SBIN000XXXX"
-              value={form.ifscCode}
-              onChangeText={(v) =>
-                setForm({ ...form, ifscCode: v.toUpperCase() })
-              }
-              maxLength={11}
-            />
-
-            <UploadRow
-              label="Upload Passbook / Cheque"
-              url={form.passbookUrl}
-              onPress={() => setUploadType("passbook")}
-              icon="document-text-outline"
-            />
-          </View>
-
-          {/* KYC DETAILS CARD */}
-          <View
-            style={{
-              backgroundColor: "#fff",
-              padding: 20,
-              borderRadius: 16,
-              marginBottom: 20,
-              shadowColor: "#000",
-              shadowOpacity: 0.05,
-              shadowRadius: 8,
-              elevation: 2,
-            }}
-          >
-            <View
-              style={{
-                flexDirection: "row",
-                marginBottom: 20,
-                alignItems: "center",
-              }}
-            >
-              <View
-                style={{
-                  padding: 8,
-                  backgroundColor: "#eff6ff",
-                  borderRadius: 8,
-                  marginRight: 12,
-                }}
-              >
-                <Ionicons name="id-card" size={20} color="#2563eb" />
-              </View>
-              <Text
-                style={{ fontSize: 18, fontWeight: "700", color: "#1f2937" }}
-              >
-                Identity Proof
-              </Text>
-              {validating && (
-                <ActivityIndicator
-                  style={{ marginLeft: "auto" }}
-                  size="small"
-                  color="#2563eb"
-                />
-              )}
-            </View>
-
-            <PremiumInput
-              label="Aadhar Number"
-              placeholder="12 Digit Aadhar No"
-              value={form.aadharNumber}
-              onChangeText={(v) => setForm({ ...form, aadharNumber: v })}
-              onBlur={checkKyc}
-              keyboardType="numeric"
-              maxLength={12}
-              error={kycWarnings.aadhar ? "Aadhar already exists" : null}
-            />
-
-            <View style={{ flexDirection: "row", gap: 10 }}>
-              <View style={{ flex: 1 }}>
-                <UploadRow
-                  label="Aadhar Front"
-                  url={form.aadharFrontUrl}
-                  onPress={() => setUploadType("aadharFront")}
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <UploadRow
-                  label="Aadhar Back"
-                  url={form.aadharBackUrl}
-                  onPress={() => setUploadType("aadharBack")}
-                />
-              </View>
-            </View>
-
-            <View style={{ height: 15 }} />
-
-            <PremiumInput
-              label="PAN Number"
-              placeholder="ABCDE1234F"
-              value={form.panNumber}
-              onChangeText={(v) =>
-                setForm({ ...form, panNumber: v.toUpperCase() })
-              }
-              onBlur={checkKyc}
-              maxLength={10}
-              error={kycWarnings.pan ? "PAN already exists" : null}
-            />
-
-            <UploadRow
-              label="Upload PAN Card"
-              url={form.panUrl}
-              onPress={() => setUploadType("pan")}
-            />
-          </View>
         </ScrollView>
 
-        {/* FOOTER BUTTON */}
-        <View
-          style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            backgroundColor: "#fff",
-            padding: 20,
-            borderTopWidth: 1,
-            borderColor: "#f3f4f6",
-          }}
-        >
-          <TouchableOpacity
-            onPress={goNext}
-            disabled={!isComplete}
-            style={{
-              backgroundColor: isComplete ? "#2563eb" : "#d1d5db",
-              paddingVertical: 18,
-              borderRadius: 16,
-              shadowColor: isComplete ? "#2563eb" : "transparent",
-              shadowOpacity: 0.4,
-              shadowOffset: { width: 0, height: 4 },
-              elevation: isComplete ? 5 : 0,
-              alignItems: "center",
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 16,
-                fontWeight: "700",
-                color: isComplete ? "#fff" : "#9ca3af",
-              }}
+        {/* Footer */}
+        <View style={styles.footer}>
+            <TouchableOpacity 
+                onPress={handleNext} 
+                disabled={!isFormValid}
+                style={[styles.nextBtn, !isFormValid && styles.nextBtnDisabled]}
             >
-              Review & Submit →
-            </Text>
-          </TouchableOpacity>
+                <Text style={styles.nextBtnText}>Review & Submit →</Text>
+            </TouchableOpacity>
         </View>
 
-        {/* MODALS */}
-        <BankPickerModal
-          visible={bankModalVisible}
-          onClose={() => setBankModalVisible(false)}
-          onSelect={(bank) => setForm({ ...form, bankName: bank })}
-        />
+        {/* Bank Modal */}
+        <Modal visible={bankModalVisible} animationType="slide" presentationStyle="pageSheet">
+           <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+              <View style={{ padding: 16, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderColor: '#F3F4F6' }}>
+                 <TouchableOpacity onPress={() => setBankModalVisible(false)}><Ionicons name="close" size={28} /></TouchableOpacity>
+                 <TextInput style={{ flex: 1, marginLeft: 16, fontSize: 16, fontWeight: '500' }} placeholder="Search Bank..." value={bankSearch} onChangeText={setBankSearch} autoFocus />
+              </View>
+              <FlatList data={filteredBanks} keyExtractor={i => i} renderItem={({item}) => (
+                 <TouchableOpacity onPress={() => { setForm({ ...form, bankName: item }); setBankModalVisible(false); }} style={{ padding: 16, borderBottomWidth: 1, borderColor: '#F9FAFB' }}>
+                    <Text style={{ fontSize: 16, color: '#374151' }}>{item}</Text>
+                 </TouchableOpacity>
+              )} />
+           </SafeAreaView>
+        </Modal>
 
+        {/* Upload Sheet */}
         {uploadType && (
-          <UploadSheet
-            type={uploadType}
-            customerId={params.customerId}
-            onClose={() => setUploadType(null)}
-            onSuccess={handleUploadSuccess}
-          />
+            <UploadSheet 
+                type={uploadType} 
+                customerId={params.customerId} 
+                onClose={() => setUploadType(null)} 
+                onSuccess={(type, url) => {
+                    setForm(prev => ({ ...prev, [`${type}Url`]: url }));
+                    setUploadType(null);
+                }} 
+            />
         )}
+
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#F8F9FA" },
+  header: { flexDirection: 'row', alignItems: 'center', padding: 20, backgroundColor: '#fff', borderBottomWidth: 1, borderColor: '#F3F4F6' },
+  backBtn: { marginRight: 16 },
+  headerTitle: { fontSize: 20, fontWeight: '700', color: '#111' },
+  
+  progressContainer: { paddingHorizontal: 20, paddingVertical: 15, backgroundColor: '#fff' },
+  progressTrack: { height: 6, backgroundColor: '#E5E7EB', borderRadius: 3, marginBottom: 8 },
+  progressFill: { height: '100%', backgroundColor: '#2563EB', borderRadius: 3 },
+  progressText: { fontSize: 12, color: '#6B7280', fontWeight: '600' },
+  
+  scrollContent: { padding: 20, paddingBottom: 100 },
+  
+  card: { backgroundColor: '#fff', borderRadius: 16, padding: 20, marginBottom: 20, shadowColor: "#000", shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 },
+  cardHeaderRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  cardIconBg: { width: 32, height: 32, borderRadius: 8, backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center', marginRight: 10 },
+  cardTitle: { fontSize: 16, fontWeight: '700', color: '#1F2937' },
+
+  label: { fontSize: 12, fontWeight: '600', color: '#4B5563', textTransform: 'uppercase' },
+  errorText: { fontSize: 11, color: '#EF4444', fontWeight: '600' },
+  
+  input: { backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: '#111' },
+  inputError: { borderColor: '#EF4444', backgroundColor: '#FEF2F2' },
+  inputText: { fontSize: 15, color: '#111' },
+  
+  dropdown: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12 },
+  
+  uploadBox: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: '#E5E7EB', borderStyle: 'dashed', backgroundColor: '#F9FAFB' },
+  uploadBoxSuccess: { borderColor: '#86EFAC', backgroundColor: '#F0FDF4', borderStyle: 'solid' },
+  iconCircle: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#E5E7EB', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  iconCircleSuccess: { backgroundColor: '#22C55E' },
+  uploadLabel: { fontSize: 13, fontWeight: '600', color: '#374151' },
+  uploadSub: { fontSize: 11, color: '#9CA3AF', marginTop: 2 },
+
+  footer: { padding: 20, backgroundColor: '#fff', borderTopWidth: 1, borderColor: '#F3F4F6' },
+  nextBtn: { backgroundColor: '#2563EB', height: 56, borderRadius: 14, justifyContent: 'center', alignItems: 'center', shadowColor: "#2563EB", shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
+  nextBtnDisabled: { backgroundColor: '#9CA3AF', shadowOpacity: 0 },
+  nextBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+});

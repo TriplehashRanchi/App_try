@@ -2,21 +2,22 @@ import { useAuth } from "@/context/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
-import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const DetailRow = ({ label, value, isLast }) => (
-  <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: isLast ? 0 : 1, borderColor: '#f3f4f6' }}>
-    <Text style={{ color: "#6b7280", fontSize: 14 }}>{label}</Text>
-    <Text style={{ color: "#111827", fontWeight: "600", fontSize: 14, maxWidth: '60%', textAlign: 'right' }}>{value || "—"}</Text>
+// --- Helper Components ---
+const SummaryRow = ({ label, value }) => (
+  <View style={styles.row}>
+    <Text style={styles.rowLabel}>{label}</Text>
+    <Text style={styles.rowValue} numberOfLines={1} ellipsizeMode="tail">{value || "—"}</Text>
   </View>
 );
 
-const DocBadge = ({ label, url }) => (
-  <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 12, marginBottom: 8, backgroundColor: url ? '#ecfdf5' : '#fef2f2', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20 }}>
-    <Ionicons name={url ? "checkmark-circle" : "alert-circle"} size={16} color={url ? "#059669" : "#ef4444"} />
-    <Text style={{ marginLeft: 4, fontSize: 12, fontWeight: '600', color: url ? "#065f46" : "#991b1b" }}>
-      {label}
+const StatusBadge = ({ label, url }) => (
+  <View style={[styles.badge, url ? styles.badgeSuccess : styles.badgePending]}>
+    <Ionicons name={url ? "checkmark-circle" : "alert-circle"} size={14} color={url ? "#15803D" : "#991B1B"} />
+    <Text style={[styles.badgeText, url ? styles.textSuccess : styles.textPending]}>
+        {label}
     </Text>
   </View>
 );
@@ -30,94 +31,141 @@ export default function AddCustomerStep3() {
   const handleFinalize = async () => {
     setLoading(true);
     try {
+      // 1. Prepare the Final Payload
+      // We take params passed from Step 1 and Step 2
       const payload = {
-        phone2: "", // Optional
+        phone2: "", 
         address: params.address,
         aadhar_number: params.aadharNumber,
         pan_number: params.panNumber,
         bank_name: params.bankName,
         bank_account_number: params.accountNumber,
         bank_ifsc_code: params.ifscCode,
+        // NOTE: Images were already uploaded to server in Step 2, 
+        // so the backend likely associates them via 'customerId' already, 
+        // or if your API needs URLs in the body, add them here:
+        // aadhar_front_url: params.aadharFrontUrl, etc.
       };
 
+      console.log("Finalizing Customer:", params.customerId);
+
+      // 2. Call the Finalize API
       await axiosAuth().put(`/customers/${params.customerId}/finalize`, payload);
 
+      // 3. Success & Redirect
       Alert.alert(
-        "Success",
-        "Customer onboarded successfully! Waiting for admin verification.",
-        [{ text: "OK", onPress: () => router.replace("/(leader)/customers") }]
+        "Onboarding Successful",
+        "The customer application has been submitted for Admin verification.",
+        [{ text: "Go to Dashboard", onPress: () => router.replace("/(leader)/customers") }]
       );
 
     } catch (err) {
-      Alert.alert("Submission Failed", err?.response?.data?.message || "Something went wrong");
+      console.error("Finalize Error:", err);
+      Alert.alert("Submission Failed", err?.response?.data?.message || "Could not finalize customer.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#F9FAFB" }}>
-       <View style={{ paddingHorizontal: 20, paddingVertical: 15, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#f0f0f0' }}>
-        <Text style={{ fontSize: 24, fontWeight: "800", color: "#111827" }}>Final Review</Text>
-        <Text style={{ fontSize: 14, color: "#6b7280", marginTop: 4 }}>Step 3 of 3: Confirm Details</Text>
+    <SafeAreaView style={styles.container}>
+      
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="arrow-back" size={24} color="#111" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Confirm Details</Text>
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 20 }}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         
-        {/* Personal Info Card */}
-        <View style={{ backgroundColor: "#fff", borderRadius: 16, padding: 20, marginBottom: 20, shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 5, elevation: 2 }}>
-          <Text style={{ fontSize: 16, fontWeight: "700", marginBottom: 10, color: "#4f46e5" }}>Personal Details</Text>
-          <DetailRow label="Full Name" value={`${params.firstName} ${params.lastName}`} />
-          <DetailRow label="Email" value={params.email} />
-          <DetailRow label="Phone" value={params.phone} />
-          <DetailRow label="Address" value={params.address} isLast />
+        {/* Banner */}
+        <View style={styles.banner}>
+            <Ionicons name="information-circle" size={20} color="#1D4ED8" />
+            <Text style={styles.bannerText}>Please review all details carefully before submitting.</Text>
         </View>
 
-        {/* Bank Info Card */}
-        <View style={{ backgroundColor: "#fff", borderRadius: 16, padding: 20, marginBottom: 20, shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 5, elevation: 2 }}>
-          <Text style={{ fontSize: 16, fontWeight: "700", marginBottom: 10, color: "#4f46e5" }}>Financial Details</Text>
-          <DetailRow label="Bank Name" value={params.bankName} />
-          <DetailRow label="Account No" value={params.accountNumber} />
-          <DetailRow label="IFSC Code" value={params.ifscCode} isLast />
+        {/* 1. Personal Info */}
+        <View style={styles.card}>
+           <Text style={styles.cardTitle}>Personal Details</Text>
+           <View style={styles.divider} />
+           <SummaryRow label="Full Name" value={`${params.firstName} ${params.lastName}`} />
+           <SummaryRow label="Email" value={params.email} />
+           <SummaryRow label="Phone" value={params.phone} />
+           <SummaryRow label="Address" value={params.address} />
         </View>
 
-        {/* Documents Status */}
-        <View style={{ backgroundColor: "#fff", borderRadius: 16, padding: 20, marginBottom: 30, shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 5, elevation: 2 }}>
-           <Text style={{ fontSize: 16, fontWeight: "700", marginBottom: 15, color: "#4f46e5" }}>Document Status</Text>
-           <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-              <DocBadge label="Passbook" url={params.passbookUrl} />
-              <DocBadge label="Aadhar Front" url={params.aadharFrontUrl} />
-              <DocBadge label="Aadhar Back" url={params.aadharBackUrl} />
-              <DocBadge label="PAN Card" url={params.panUrl} />
+        {/* 2. Bank Info */}
+        <View style={styles.card}>
+           <Text style={styles.cardTitle}>Financial Details</Text>
+           <View style={styles.divider} />
+           <SummaryRow label="Bank Name" value={params.bankName} />
+           <SummaryRow label="Account No" value={params.accountNumber} />
+           <SummaryRow label="IFSC Code" value={params.ifscCode} />
+        </View>
+
+        {/* 3. Documents */}
+        <View style={styles.card}>
+           <Text style={styles.cardTitle}>Documents Attached</Text>
+           <View style={styles.divider} />
+           <View style={styles.badgeContainer}>
+              <StatusBadge label="Passbook" url={params.passbookUrl} />
+              <StatusBadge label="Aadhar Front" url={params.aadharFrontUrl} />
+              <StatusBadge label="Aadhar Back" url={params.aadharBackUrl} />
+              <StatusBadge label="PAN Card" url={params.panUrl} />
            </View>
         </View>
 
-        {/* Buttons */}
-        <View style={{ marginBottom: 40 }}>
-          <TouchableOpacity
-            onPress={handleFinalize}
-            disabled={loading}
-            style={{
-              backgroundColor: "#16a34a",
-              paddingVertical: 18,
-              borderRadius: 14,
-              alignItems: 'center',
-              shadowColor: "#16a34a",
-              shadowOpacity: 0.4,
-              shadowRadius: 8,
-              elevation: 4,
-              marginBottom: 15
-            }}
-          >
-            {loading ? <ActivityIndicator color="#fff" /> : <Text style={{ color: "#fff", fontSize: 16, fontWeight: "700" }}>Complete Onboarding ✓</Text>}
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => router.back()} style={{ padding: 15, alignItems: 'center' }}>
-             <Text style={{ color: "#6b7280", fontWeight: "600" }}>Go Back</Text>
-          </TouchableOpacity>
-        </View>
-
       </ScrollView>
+
+      {/* Submit Button */}
+      <View style={styles.footer}>
+        <TouchableOpacity 
+            onPress={handleFinalize} 
+            disabled={loading} 
+            style={styles.submitBtn}
+        >
+            {loading ? (
+                <ActivityIndicator color="#fff" />
+            ) : (
+                <Text style={styles.submitBtnText}>Complete Onboarding ✓</Text>
+            )}
+        </TouchableOpacity>
+      </View>
+
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#F8F9FA" },
+  header: { flexDirection: 'row', alignItems: 'center', padding: 20, backgroundColor: '#fff', borderBottomWidth: 1, borderColor: '#F3F4F6' },
+  backBtn: { marginRight: 16 },
+  headerTitle: { fontSize: 20, fontWeight: '700', color: '#111' },
+  
+  scrollContent: { padding: 20, paddingBottom: 40 },
+  
+  banner: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#EFF6FF', padding: 12, borderRadius: 12, marginBottom: 20, borderWidth: 1, borderColor: '#DBEAFE' },
+  bannerText: { color: '#1E40AF', marginLeft: 8, fontSize: 13, flex: 1 },
+
+  card: { backgroundColor: '#fff', borderRadius: 16, padding: 20, marginBottom: 16, shadowColor: "#000", shadowOpacity: 0.03, shadowRadius: 8, elevation: 2 },
+  cardTitle: { fontSize: 16, fontWeight: '700', color: '#1F2937' },
+  divider: { height: 1, backgroundColor: '#F3F4F6', marginVertical: 12 },
+  
+  row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
+  rowLabel: { color: '#6B7280', fontSize: 14 },
+  rowValue: { color: '#111', fontWeight: '600', fontSize: 14, maxWidth: '60%' },
+
+  badgeContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  badge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: 'transparent' },
+  badgeSuccess: { backgroundColor: '#DCFCE7', borderColor: '#86EFAC' },
+  badgePending: { backgroundColor: '#FEE2E2', borderColor: '#FCA5A5' },
+  badgeText: { fontSize: 12, fontWeight: '600', marginLeft: 4 },
+  textSuccess: { color: '#15803D' },
+  textPending: { color: '#991B1B' },
+
+  footer: { padding: 20, backgroundColor: '#fff', borderTopWidth: 1, borderColor: '#F3F4F6' },
+  submitBtn: { backgroundColor: '#16A34A', height: 56, borderRadius: 14, justifyContent: 'center', alignItems: 'center', shadowColor: "#16A34A", shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
+  submitBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+});
