@@ -118,18 +118,39 @@ export default function MeetingDetails() {
     if (!text) return "";
     return text.replace(/📝 \[Note.*?\]:\s*/g, "").trim();
   };
-  const getStatusTextColor = (status) => {
+
+  const splitDescriptionAndNotes = (text) => {
+    if (!text) return { desc: "", notes: [] };
+
+    const lines = text.split("\n").filter(Boolean);
+
+    // First line = actual description
+    const desc = lines[0];
+
+    // Remaining lines that contain notes
+    const notes = lines
+      .slice(1)
+      .filter((l) => l.includes("📝"))
+      .map((n) => n.replace(/📝 \[Note.*?\]:\s*/g, "").trim());
+
+    return { desc, notes };
+  };
+  const { desc, notes } = meeting
+    ? splitDescriptionAndNotes(meeting.description)
+    : { desc: "", notes: [] };
+
+  const getStatusPillStyles = (status) => {
     switch (status) {
       case "scheduled":
-        return "#2563EB"; // blue
+        return { bg: "#E0ECFF", text: "#2563EB" }; // Blue
       case "completed":
-        return "#059669"; // green
+        return { bg: "#E6F9F0", text: "#059669" }; // Green
       case "cancelled":
-        return "#DC2626"; // red
+        return { bg: "#FDE8E8", text: "#DC2626" }; // Red
       case "rescheduled":
-        return "#D97706"; // yellow/orange
+        return { bg: "#FFF6E5", text: "#D97706" }; // Yellow/Orange
       default:
-        return "#6B7280"; // gray
+        return { bg: "#E5E7EB", text: "#374151" }; // Gray
     }
   };
 
@@ -140,7 +161,7 @@ export default function MeetingDetails() {
       </SafeAreaView>
     );
   }
-
+  const pill = getStatusPillStyles(meeting.status);
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -188,7 +209,7 @@ export default function MeetingDetails() {
             </Text>
           </View>
 
-          {/* REMINDER */}
+          {/* DURATION */}
           <View style={styles.row}>
             <Ionicons name="time-outline" size={20} color="#6B7280" />
             <Text style={styles.rowText}>
@@ -196,31 +217,59 @@ export default function MeetingDetails() {
             </Text>
           </View>
 
+          {/* STATUS */}
           <View style={styles.row}>
             <Ionicons
               name="information-circle-outline"
               size={20}
-              color={getStatusTextColor(meeting.status)}
+              color={pill.text}
             />
-            <Text
-              style={[
-                styles.rowText,
-                { color: getStatusTextColor(meeting.status) },
-              ]}
-            >
-              {meeting.status}
-            </Text>
+            <View style={[styles.pill, { backgroundColor: pill.bg }]}>
+              <Text style={[styles.pillText, { color: pill.text }]}>
+                {meeting.status.toUpperCase()}
+              </Text>
+            </View>
           </View>
 
           {/* DESCRIPTION */}
-          {meeting.description ? (
+          {/* DESCRIPTION */}
+          {desc ? (
             <View style={styles.descBox}>
-              <Text style={styles.descTitle}>Description</Text>
-              <Text style={styles.descText}>
-                {cleanDescription(meeting.description)}
-              </Text>
+              <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
+                <Ionicons
+                  name="document-text-outline"
+                  size={18}
+                  color="#6B7280"
+                />
+                <Text style={[styles.descText, { marginLeft: 8 }]}>{desc}</Text>
+              </View>
             </View>
           ) : null}
+
+          {/* NOTES LIST */}
+          {notes.length > 0 && (
+            <View style={{ marginTop: 18 }}>
+              <Text style={styles.descTitle}>Notes</Text>
+
+              {notes.map((n, idx) => (
+                <View
+                  key={idx}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "flex-start",
+                    marginBottom: 10,
+                  }}
+                >
+                  <Ionicons
+                    name="chatbubble-ellipses-outline"
+                    size={18}
+                    color="#2563EB"
+                  />
+                  <Text style={[styles.descText, { marginLeft: 8 }]}>{n}</Text>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
 
         {/* PARTICIPANTS CARD */}
@@ -353,6 +402,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  backIcon: {
+    fontSize: 24,
+    color: "#222",
+  },
 
   headerTitle: {
     fontSize: 16,
@@ -364,9 +417,9 @@ const styles = StyleSheet.create({
   mainCard: {
     backgroundColor: "#FFFFFF",
     padding: 20,
-    borderRadius: 10,
+
     marginBottom: 16,
-    elevation: 1,
+    borderRadius: 10,
   },
 
   bigTitle: {
@@ -386,10 +439,6 @@ const styles = StyleSheet.create({
   rowText: {
     fontSize: 15,
     color: "#111",
-  },
-
-  descBox: {
-    marginTop: 18,
   },
 
   descTitle: {
@@ -474,15 +523,15 @@ const styles = StyleSheet.create({
   actionBtn: {
     flex: 1,
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: 8,
     alignItems: "center",
   },
 
   actionText: { fontSize: 14, fontWeight: "700", color: "#fff" },
 
-  primaryBtn: { backgroundColor: "#2563EB" },
+  primaryBtn: { backgroundColor: "#387AFF" },
   successBtn: { backgroundColor: "#059669" },
-  cancelBtn: { backgroundColor: "#DC2626" },
+  cancelBtn: { backgroundColor: "#e43d3dff" },
 
   /* MODAL */
   modalWrap: {
@@ -516,10 +565,16 @@ const styles = StyleSheet.create({
   modalActions: {
     flexDirection: "row",
     justifyContent: "flex-end",
+    alignItems: "center",
     marginTop: 14,
     gap: 10,
   },
-
+  modalCancel: {
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: "#E5E7EB",
+  },
   modalCancelText: { color: "#6B7280", fontSize: 14 },
   modalSave: {
     backgroundColor: "#2563EB",
@@ -529,4 +584,16 @@ const styles = StyleSheet.create({
   },
 
   modalSaveText: { color: "#fff", fontWeight: "700" },
+
+  pill: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+
+  pillText: {
+    fontSize: 11,
+    fontWeight: "700",
+  },
 });

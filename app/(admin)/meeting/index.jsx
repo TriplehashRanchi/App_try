@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   FlatList,
+  ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -147,33 +148,40 @@ export default function MeetingsListPage() {
       </View>
 
       {/* FILTER CHIPS */}
+      {/* FILTER CHIPS */}
       {showFilters && (
-        <View style={styles.filterRow}>
-          {[
-            { key: "all", label: "All" },
-            { key: "scheduled", label: "Scheduled" },
-            { key: "completed", label: "Completed" },
-            { key: "cancelled", label: "Cancelled" },
-            { key: "rescheduled", label: "Rescheduled" },
-          ].map((f) => (
-            <TouchableOpacity
-              key={f.key}
-              onPress={() => setStatus(f.key)}
-              style={[
-                styles.filterChip,
-                status === f.key && styles.filterChipActive,
-              ]}
-            >
-              <Text
+        <View style={{ marginBottom: 10 }}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterScroll}
+          >
+            {[
+              { key: "all", label: "All" },
+              { key: "scheduled", label: "Scheduled" },
+              { key: "completed", label: "Completed" },
+              { key: "cancelled", label: "Cancelled" },
+              { key: "rescheduled", label: "Rescheduled" },
+            ].map((f) => (
+              <TouchableOpacity
+                key={f.key}
+                onPress={() => setStatus(f.key)}
                 style={[
-                  styles.filterText,
-                  status === f.key && styles.filterTextActive,
+                  styles.filterChip,
+                  status === f.key && styles.filterChipActive,
                 ]}
               >
-                {f.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
+                <Text
+                  style={[
+                    styles.filterText,
+                    status === f.key && styles.filterTextActive,
+                  ]}
+                >
+                  {f.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
       )}
 
@@ -181,6 +189,22 @@ export default function MeetingsListPage() {
       {loading ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color="#2563EB" />
+        </View>
+      ) : meetings.length === 0 ? (
+        <View style={styles.emptyWrap}>
+          <Ionicons name="calendar-outline" size={64} color="#9CA3AF" />
+          <Text style={styles.emptyTitle}>No Meetings Found</Text>
+          <Text style={styles.emptySub}>
+            You haven’t added any meetings yet.
+          </Text>
+
+          <TouchableOpacity
+            style={styles.emptyBtn}
+            onPress={() => router.push("/meeting/add")}
+          >
+            <Ionicons name="add" size={18} color="#fff" />
+            <Text style={styles.emptyBtnText}>Add Meeting</Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <FlatList
@@ -208,10 +232,10 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 22, fontWeight: "700", color: "#111" },
 
   addBtn: {
-    backgroundColor: "#2563EB",
+    backgroundColor: "#387AFF",
     width: 38,
     height: 38,
-    borderRadius: 10,
+    borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -259,7 +283,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: "#E5E7EB",
   },
-  filterChipActive: { backgroundColor: "#2563EB" },
+  filterChipActive: { backgroundColor: "#387AFF" },
   filterText: { fontSize: 13, fontWeight: "500", color: "#374151" },
   filterTextActive: { color: "#FFF" },
 
@@ -296,4 +320,69 @@ const styles = StyleSheet.create({
   time: { fontSize: 12, color: "#6B7280" },
 
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
+
+  emptyWrap: {
+    marginTop: 100,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 20,
+  },
+
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#111",
+    marginTop: 16,
+  },
+
+  emptySub: {
+    fontSize: 14,
+    color: "#6B7280",
+    marginTop: 4,
+    textAlign: "center",
+  },
+
+  emptyBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#387AFF",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginTop: 18,
+    gap: 6,
+  },
+
+  emptyBtnText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  filterScroll: {
+    paddingHorizontal: 4,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  }, 
+
+  filterChip: {
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: "#E5E7EB",
+  },
+
+  filterChipActive: {
+    backgroundColor: "#387AFF",
+  },
+
+  filterText: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: "#374151",
+  },
+
+  filterTextActive: {
+    color: "#FFF",
+  },
 });

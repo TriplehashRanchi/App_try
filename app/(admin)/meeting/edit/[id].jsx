@@ -46,49 +46,50 @@ export default function EditMeeting() {
     loadMeeting();
   }, [id]);
 
-
   const parseDescriptionAndNotes = (raw) => {
-  if (!raw) return { description: "", notes: [] };
+    if (!raw) return { description: "", notes: [] };
 
-  const parts = raw.split("📝").map(p => p.trim()).filter(Boolean);
-  const description = parts[0]; // first block always description
+    const parts = raw
+      .split("📝")
+      .map((p) => p.trim())
+      .filter(Boolean);
+    const description = parts[0]; // first block always description
 
-  const notes = parts.slice(1).map(n =>
-    n.replace(/\[Note.*?\]:\s*/, "").trim()
-  );
+    const notes = parts
+      .slice(1)
+      .map((n) => n.replace(/\[Note.*?\]:\s*/, "").trim());
 
-  return { description, notes };
-};
+    return { description, notes };
+  };
 
   const loadMeeting = async () => {
-  try {
-    const { data } = await axiosAuth().get(`/meetings/${id}`);
+    try {
+      const { data } = await axiosAuth().get(`/meetings/${id}`);
 
-    const parsedParticipants =
-      typeof data.participants === "string"
-        ? JSON.parse(data.participants)
-        : data.participants || [];
+      const parsedParticipants =
+        typeof data.participants === "string"
+          ? JSON.parse(data.participants)
+          : data.participants || [];
 
-    const { description, notes } = parseDescriptionAndNotes(data.description);
+      const { description, notes } = parseDescriptionAndNotes(data.description);
 
-    setTitle(data.title);
-    setDate(new Date(data.meeting_date));
-    setDuration(String(data.duration_minutes));
-    setLocationType(data.location_type);
-    setLocationDetails(data.location_details || "");
+      setTitle(data.title);
+      setDate(new Date(data.meeting_date));
+      setDuration(String(data.duration_minutes));
+      setLocationType(data.location_type);
+      setLocationDetails(data.location_details || "");
 
-    // 👇 Final cleaned notes = description + all notes text
-    setNotes(description + "\n\n" + notes.join("\n"));
+      // 👇 Final cleaned notes = description + all notes text
+      setNotes(description + "\n\n" + notes.join("\n"));
 
-    setParticipants(parsedParticipants);
-  } catch (err) {
-    Toast.show({ type: "error", text1: "Failed to load meeting" });
-    console.log(err);
-  } finally {
-    setLoading(false);
-  }
-};
-
+      setParticipants(parsedParticipants);
+    } catch (err) {
+      Toast.show({ type: "error", text1: "Failed to load meeting" });
+      console.log(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // ADD PARTICIPANT
   const addParticipant = () => {
@@ -147,9 +148,6 @@ export default function EditMeeting() {
       setSaving(false);
     }
   };
- 
-
-  
 
   if (loading) {
     return (
@@ -165,11 +163,11 @@ export default function EditMeeting() {
         {/* HEADER */}
         <View style={styles.header}>
           <TouchableOpacity
-                      onPress={() => router.back()}
-                      style={styles.backButton}
-                    >
-                      <Text style={styles.backIcon}>←</Text>
-                    </TouchableOpacity>
+            onPress={() => router.back()}
+            style={styles.backButton}
+          >
+            <Text style={styles.backIcon}>←</Text>
+          </TouchableOpacity>
           <Text style={styles.headerTitle}>Edit Meeting</Text>
           <View style={{ width: 24 }} />
         </View>
@@ -185,16 +183,14 @@ export default function EditMeeting() {
 
         {/* DATE + TIME */}
         <View style={styles.row2}>
-          <View style={{ flex: 1 }}>
+          <View style={{ width: "60%" }}>
             <Text style={styles.label}>Date & Time</Text>
 
             <TouchableOpacity
               style={styles.input}
               onPress={() => setShowDate(true)}
             >
-              <Text>
-                {dayjs(date).format("DD MMM YYYY — hh:mm A")}
-              </Text>
+              <Text>{dayjs(date).format("DD MMM YYYY — hh:mm A")}</Text>
             </TouchableOpacity>
 
             {showDate && (
@@ -231,11 +227,8 @@ export default function EditMeeting() {
               />
             )}
           </View>
-
-          <View style={{ width: 20 }} />
-
           {/* DURATION */}
-          <View style={{ flex: 1 }}>
+          <View style={{ width: "37%" }} >
             <Text style={styles.label}>Duration (min)</Text>
             <TextInput
               style={styles.input}
@@ -282,7 +275,7 @@ export default function EditMeeting() {
         {/* PARTICIPANTS */}
         <Text style={styles.label}>Participants</Text>
 
-        <View style={styles.row2}>
+        <View style={[styles.row2, { marginBottom: 10 }]}>
           <TextInput
             value={pName}
             onChangeText={setPName}
@@ -290,7 +283,6 @@ export default function EditMeeting() {
             style={[styles.input, { flex: 1 }]}
           />
 
-           
           <TextInput
             value={pContact}
             onChangeText={setPContact}
@@ -325,15 +317,25 @@ export default function EditMeeting() {
         />
 
         {/* SAVE BUTTON */}
-        <TouchableOpacity
-          style={[styles.submitBtn, saving && { opacity: 0.6 }]}
-          disabled={saving}
-          onPress={saveChanges}
-        >
-          <Text style={styles.submitText}>
-            {saving ? "Saving..." : "Save Changes"}
-          </Text>
-        </TouchableOpacity>
+
+        <View style={styles.actionButtons}>
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={() => router.back()}
+            disabled={loading}
+          >
+            <Text style={styles.secondaryButtonText}>Cancel</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.submitBtn, saving && { opacity: 0.6 }]}
+            disabled={saving}
+            onPress={saveChanges}
+          >
+            <Text style={styles.submitText}>
+              {saving ? "Saving..." : "Save Changes"}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -347,13 +349,13 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
 
   header: {
-     flexDirection: "row",
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingVertical: 16,
-   },
-    backButton: {
+  },
+  backButton: {
     width: 40,
     height: 40,
     justifyContent: "center",
@@ -381,6 +383,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
+    width: "100%",
   },
 
   rowButtons: {
@@ -396,7 +399,7 @@ const styles = StyleSheet.create({
   },
 
   typeBtnActive: {
-    backgroundColor: "#2563EB",
+    backgroundColor: "#387AFF",
   },
 
   typeBtnText: {
@@ -412,8 +415,8 @@ const styles = StyleSheet.create({
   addBtn: {
     width: 42,
     height: 42,
-    borderRadius: 10,
-    backgroundColor: "#2563EB",
+    borderRadius: 8,
+    backgroundColor: "#387AFF",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -421,16 +424,22 @@ const styles = StyleSheet.create({
   participantRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: 6,
+     
+    
   },
 
-  participantText: { fontSize: 14, color: "#111" },
-
+  participantText: { fontSize: 14, color: "#111", marginTop: 4 },
+  actionButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
   submitBtn: {
-    backgroundColor: "#2563EB",
-    paddingVertical: 14,
-    borderRadius: 12,
+    backgroundColor: "#387AFF",
+    paddingVertical: 16,
+    borderRadius: 8,
+    alignItems: "center",
     marginVertical: 30,
+    width: "48%",
   },
 
   submitText: {
@@ -438,5 +447,21 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 16,
     fontWeight: "700",
+  },
+  secondaryButton: {
+    backgroundColor: "#fff",
+    paddingVertical: 16,
+    borderRadius: 8,
+    alignItems: "center",
+    marginVertical: 30,
+    width: "48%",
+    borderWidth: 1,
+    borderColor: "#387AFF",
+  },
+
+  secondaryButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#387AFF",
   },
 });

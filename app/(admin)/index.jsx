@@ -11,7 +11,7 @@ import InvestmentBreakdownCard from "@/components/admin/InvestmentBreakdownCard"
 import LeaderPerformance from "@/components/admin/LeaderPerformance";
 import RecentCustomers from "@/components/admin/RecentCustomers";
 import StatsOverview from "@/components/admin/StatsOverview";
-import TodaysInvestments from "@/components/admin/TodaysInvestments";
+import TodaysInvestments from "@/components/admin/TodaysInvestments"; 
  import UpcomingMeetings from "@/components/admin/UpcomingMeetings";
 
 export default function AdminDashboard() {

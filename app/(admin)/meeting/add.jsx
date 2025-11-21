@@ -44,7 +44,10 @@ export default function AddMeeting() {
       return;
     }
 
-    setParticipants([...participants, { name: pName, phone: pContact, email: pContact }]);
+    setParticipants([
+      ...participants,
+      { name: pName, phone: pContact, email: pContact },
+    ]);
     setPName("");
     setPContact("");
   };
@@ -101,11 +104,11 @@ export default function AddMeeting() {
         {/* HEADER */}
         <View style={styles.header}>
           <TouchableOpacity
-                    onPress={() => router.back()}
-                    style={styles.backButton}
-                  >
-                    <Text style={styles.backIcon}>←</Text>
-                  </TouchableOpacity>
+            onPress={() => router.back()}
+            style={styles.backButton}
+          >
+            <Text style={styles.backIcon}>←</Text>
+          </TouchableOpacity>
           <Text style={styles.headerTitle}>New Meeting</Text>
           <View style={{ width: 24 }} />
         </View>
@@ -121,14 +124,18 @@ export default function AddMeeting() {
 
         {/* DATE & TIME */}
         <View style={styles.row2}>
-          <View style={{ flex: 1 }}>
+          <View style={{ width: "60%" }}>
             <Text style={styles.label}>Date & Time</Text>
             <TouchableOpacity
               style={styles.input}
               onPress={() => setShowDate(true)}
             >
               <Text>
-                {date.toLocaleDateString()} — {date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                {date.toLocaleDateString()} —{" "}
+                {date.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
               </Text>
             </TouchableOpacity>
 
@@ -167,10 +174,10 @@ export default function AddMeeting() {
             )}
           </View>
 
-          <View style={{ width: 20 }} />
+     
 
           {/* DURATION */}
-          <View style={{ flex: 1 }}>
+          <View style={{ width: "37%" }}>
             <Text style={styles.label}>Duration (min)</Text>
             <TextInput
               style={styles.input}
@@ -216,7 +223,7 @@ export default function AddMeeting() {
 
         {/* PARTICIPANTS */}
         <Text style={styles.label}>Participants</Text>
-        <View style={styles.row2}>
+        <View style={[styles.row22, { marginBottom: 10 }]}>
           <TextInput
             value={pName}
             onChangeText={setPName}
@@ -256,15 +263,24 @@ export default function AddMeeting() {
         />
 
         {/* SUBMIT BUTTON */}
-        <TouchableOpacity
-          style={[styles.submitBtn, loading && { opacity: 0.6 }]}
-          onPress={createMeeting}
-          disabled={loading}
-        >
-          <Text style={styles.submitText}>
-            {loading ? "Creating..." : "Create Meeting"}
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.actionButtons}>
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={() => router.back()}
+            disabled={loading}
+          >
+            <Text style={styles.secondaryButtonText}>Cancel</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.submitBtn, loading && { opacity: 0.6 }]}
+            onPress={createMeeting}
+            disabled={loading}
+          >
+            <Text style={styles.submitText}>
+              {loading ? "Creating..." : "Create Meeting"}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -277,26 +293,24 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F9FAFB", paddingHorizontal: 16 },
 
   header: {
-     flexDirection: "row",
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingVertical: 16,
-   },
-    backButton: {
+  },
+  backButton: {
     width: 40,
     height: 40,
     justifyContent: "center",
     alignItems: "center",
   },
- backIcon: {
+  backIcon: {
     fontSize: 24,
     color: "#222",
   },
 
-  headerTitle: { fontSize: 16,
-    fontWeight: "600",
-    color: "#222", },
+  headerTitle: { fontSize: 16, fontWeight: "600", color: "#222" },
 
   label: { marginTop: 14, marginBottom: 6, fontWeight: "600", color: "#111" },
 
@@ -312,6 +326,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginTop: 0,
+    gap: 10,
+  },
+  row22: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 0,
+    
   },
 
   rowButtons: {
@@ -328,7 +349,7 @@ const styles = StyleSheet.create({
   },
 
   typeBtnActive: {
-    backgroundColor: "#2563EB",
+    backgroundColor: "#387AFF",
   },
 
   typeBtnText: {
@@ -344,8 +365,8 @@ const styles = StyleSheet.create({
   addBtn: {
     width: 42,
     height: 42,
-    backgroundColor: "#2563EB",
-    borderRadius: 10,
+    backgroundColor: "#387AFF",
+    borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
     marginLeft: 10,
@@ -354,16 +375,22 @@ const styles = StyleSheet.create({
   participantRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: 6,
+    
   },
 
   participantText: { fontSize: 14 },
-
+  actionButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
   submitBtn: {
-    backgroundColor: "#2563EB",
-    paddingVertical: 14,
-    borderRadius: 12,
+    backgroundColor: "#387AFF",
+    paddingVertical: 16,
+    borderRadius: 8,
+    alignItems: "center",
     marginVertical: 30,
+    width: "48%",
   },
 
   submitText: {
@@ -371,5 +398,22 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "700",
+  },
+
+  secondaryButton: {
+    backgroundColor: "#fff",
+    paddingVertical: 16,
+    borderRadius: 8,
+    alignItems: "center",
+    marginVertical: 30,
+    width: "48%",
+    borderWidth: 1,
+    borderColor: "#387AFF",
+  },
+
+  secondaryButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#387AFF",
   },
 });
