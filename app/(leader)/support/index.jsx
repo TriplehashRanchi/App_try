@@ -220,44 +220,62 @@ const styles = StyleSheet.create({
   backBtn: { marginRight: 12 },
   headerTitle: { fontSize: 18, fontWeight: "700", color: "#111" },
   headerStatus: { fontSize: 12, color: "#10B981", fontWeight: "500" },
-  
+
   loaderContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
-  
+
   listContent: { padding: 16, paddingBottom: 20 },
-  
+
+  // --- Chat Bubbles ---
   msgBubble: {
     maxWidth: "80%",
-    padding: 12,
-    borderRadius: 16,
-    marginBottom: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 18,
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
   },
+
+  // Customer Message (Right)
   msgMe: {
     alignSelf: "flex-end",
-    backgroundColor: "#2563EB",
-    borderBottomRightRadius: 2,
+    backgroundColor: "#1E6DEB",
+    borderBottomRightRadius: 4,
   },
+
+  // Support Message (Left)
   msgSupport: {
     alignSelf: "flex-start",
-    backgroundColor: "#fff",
-    borderBottomLeftRadius: 2,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
+    backgroundColor: "#F3F4F6",
+    borderBottomLeftRadius: 4,
   },
-  
-  msgText: { fontSize: 15, lineHeight: 20 },
+
+  msgText: {
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: "500",
+  },
   textMe: { color: "#fff" },
   textSupport: { color: "#1F2937" },
-  
-  msgTime: { fontSize: 10, marginTop: 4, textAlign: "right" },
-  timeMe: { color: "rgba(255,255,255,0.7)" },
-  timeSupport: { color: "#9CA3AF" },
+
+  msgTime: {
+    fontSize: 10,
+    marginTop: 4,
+    opacity: 0.6,
+    alignSelf: "flex-end",
+  },
+  timeMe: { color: "#fff" },
+  timeSupport: { color: "#374151" },
 
   emptyState: { marginTop: 50, alignItems: "center" },
-  emptyText: { color: "#6B7280", fontSize: 14 },
+  emptyText: { color: "#6B7280", fontSize: 14, lineHeight: 20 },
 
+  // --- Input Bar ---
   inputContainer: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-end",
     padding: 12,
     backgroundColor: "#fff",
     borderTopWidth: 1,
@@ -266,21 +284,27 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     backgroundColor: "#F3F4F6",
-    borderRadius: 24,
+    borderRadius: 28,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    fontSize: 16,
-    maxHeight: 100,
+    fontSize: 15,
+    maxHeight: 120,
     color: "#111",
   },
   sendBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#2563EB",
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: "#1E6DEB",
     justifyContent: "center",
     alignItems: "center",
     marginLeft: 10,
+    shadowColor: "#1E6DEB",
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
-  sendBtnDisabled: { backgroundColor: "#93C5FD" },
+  sendBtnDisabled: {
+    backgroundColor: "#93C5FD",
+    shadowOpacity: 0,
+  },
 });
