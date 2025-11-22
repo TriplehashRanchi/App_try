@@ -24,6 +24,10 @@ export default function Index() {
     return <Redirect href="/(admin)" />;
   }
 
+  if(user.primaryRole === "manager") {
+    return <Redirect href="/(manager)" />
+  }
+
   if (user.primaryRole === "leader") {
     return <Redirect href="/(leader)" />;
   }

@@ -1,14 +1,14 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
-    ActivityIndicator,
-    KeyboardAvoidingView,
-    Platform,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 
@@ -46,7 +46,10 @@ export default function Login() {
         router.replace("/(admin)");
       } else if (user.primaryRole === "leader") {
         router.replace("/(leader)");
-      } else {
+      } else if(user.primaryRole === "manager") {
+        router.replace("/(manager)");
+      }
+       else {
         router.replace("/(customer)");
       }
     } catch (err) {
