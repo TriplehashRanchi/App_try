@@ -23,8 +23,6 @@ export default function CustomerDetailPage() {
   const [showInvestmentModal, setShowInvestmentModal] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
 
-  // Segmented Control (tabs)
-  const [tab, setTab] = useState("profile"); // profile | documents | bank | investments
   const staticUrl = "https://8xkbnlt0-5050.inc1.devtunnels.ms";
 
   const fetchCustomer = useCallback(async () => {
@@ -35,7 +33,7 @@ export default function CustomerDetailPage() {
       setCustomer(res.data);
     } catch (err) {
       console.log("Customer fetch error", err);
-      router.push("/leader/customers");
+      router.push("/customers");
     } finally {
       setLoading(false);
     }
@@ -45,38 +43,32 @@ export default function CustomerDetailPage() {
     fetchCustomer();
   }, [fetchCustomer]);
 
-  if (loading) {
+  if (loading)
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
         <ActivityIndicator size="large" color="#2563eb" />
       </View>
     );
-  }
 
-  if (!customer) {
+  if (!customer)
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
         <Text>Customer not found.</Text>
       </View>
     );
-  }
 
   const doc = (type) => customer?.documents?.find((d) => d.type === type);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#f9fafb" }}>
-      <ScrollView style={{ flex: 1, backgroundColor: "#f9fafb", padding: 16 }}>
+      <ScrollView style={{ flex: 1, padding: 16 }}>
         {/* BACK BUTTON */}
         <TouchableOpacity
           onPress={() => router.push("/customers")}
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            marginBottom: 16,
-          }}
+          style={{ flexDirection: "row", alignItems: "center", marginBottom: 16 }}
         >
           <Feather name="arrow-left" size={20} color="#374151" />
-          <Text style={{ marginLeft: 6, color: "#374151", fontWeight: "600" }}>
+          <Text style={{ marginLeft: 6, fontWeight: "600", color: "#374151" }}>
             Back
           </Text>
         </TouchableOpacity>
@@ -125,304 +117,259 @@ export default function CustomerDetailPage() {
           </View>
         </View>
 
-        {/* SEGMENTED CONTROL */}
-        <View
-          style={{
-            flexDirection: "row",
-            backgroundColor: "#e5e7eb",
-            padding: 4,
-            borderRadius: 14,
-            marginBottom: 20,
-          }}
-        >
-          {["profile", "documents", "bank", "investments"].map((t) => (
-            <TouchableOpacity
-              key={t}
-              onPress={() => setTab(t)}
+        {/* ========================================================= */}
+        {/*                  SECTION 1 — PROFILE BUNDLE              */}
+        {/* ========================================================= */}
+
+        <Text style={{ fontSize: 20, fontWeight: "800", marginBottom: 12 }}>
+          Profile Details
+        </Text>
+
+        {/* PERSONAL INFO */}
+        <View style={{ marginBottom: 25 }}>
+          <Text style={{ fontSize: 16, fontWeight: "700", marginBottom: 10 }}>
+            Personal Information
+          </Text>
+
+          {[
+            ["First Name", customer.firstName],
+            ["Last Name", customer.lastName],
+            ["Email", customer.email],
+            ["Phone", customer.phone],
+            ["Address", customer.address],
+            ["Referred By Leader", customer.referredByLeaderId],
+          ].map(([label, value]) => (
+            <View
+              key={label}
               style={{
-                flex: 1,
-                paddingVertical: 8,
-                backgroundColor: tab === t ? "#fff" : "transparent",
-                borderRadius: 10,
+                backgroundColor: "#fff",
+                padding: 12,
+                borderRadius: 12,
+                marginBottom: 8,
+                borderWidth: 1,
+                borderColor: "#e5e7eb",
               }}
             >
-              <Text
-                style={{
-                  textAlign: "center",
-                  fontWeight: "600",
-                  color: tab === t ? "#111" : "#6b7280",
-                }}
-              >
-                {t.charAt(0).toUpperCase() + t.slice(1)}
+              <Text style={{ fontSize: 12, color: "#6b7280" }}>{label}</Text>
+              <Text style={{ fontWeight: "600", fontSize: 16 }}>
+                {value || "—"}
               </Text>
-            </TouchableOpacity>
+            </View>
           ))}
         </View>
 
-        {/* CONTENT */}
-        {tab === "profile" && (
-          <View>
-            <Text style={{ fontSize: 18, fontWeight: "700", marginBottom: 10 }}>
-              Personal Information
-            </Text>
+        {/* BANK ACCOUNTS */}
+        <View style={{ marginBottom: 25 }}>
+          <Text style={{ fontSize: 16, fontWeight: "700", marginBottom: 10 }}>
+            Bank Accounts
+          </Text>
 
-            {[
-              ["First Name", customer.firstName],
-              ["Last Name", customer.lastName],
-              ["Email", customer.email],
-              ["Phone", customer.phone],
-              ["Address", customer.address],
-              ["Referred By Leader", customer.referredByLeaderId],
-            ].map(([label, value]) => (
+          {customer.bankAccounts?.length ? (
+            customer.bankAccounts.map((acc) => (
               <View
-                key={label}
+                key={acc.id}
                 style={{
                   backgroundColor: "#fff",
-                  padding: 12,
+                  padding: 14,
                   borderRadius: 12,
-                  marginBottom: 8,
+                  marginBottom: 10,
                   borderWidth: 1,
                   borderColor: "#e5e7eb",
                 }}
               >
-                <Text style={{ fontSize: 12, color: "#6b7280" }}>{label}</Text>
-                <Text style={{ fontWeight: "600", fontSize: 16 }}>
-                  {value || "—"}
+                <Text style={{ fontWeight: "700" }}>{acc.bankName}</Text>
+                <Text style={{ color: "#6b7280", marginTop: 4 }}>
+                  A/C: {acc.accountNumber}
                 </Text>
+                <Text style={{ color: "#6b7280" }}>IFSC: {acc.ifscCode}</Text>
               </View>
-            ))}
-          </View>
-        )}
+            ))
+          ) : (
+            <Text style={{ color: "#6b7280", marginTop: 10 }}>
+              No bank accounts added.
+            </Text>
+          )}
+        </View>
 
         {/* DOCUMENTS */}
-        {tab === "documents" && (
-          <View>
-            <Text style={{ fontSize: 18, fontWeight: "700", marginBottom: 10 }}>
-              Documents
-            </Text>
+        <View>
+          <Text style={{ fontSize: 16, fontWeight: "700", marginBottom: 10 }}>
+            Documents
+          </Text>
 
-            {[
-              ["Aadhar Front", doc("aadhar_front")?.fileUrl],
-              ["Aadhar Back", doc("aadhar_back")?.fileUrl],
-              ["PAN Card", doc("pan")?.fileUrl],
-              ["Passbook", doc("passbook")?.fileUrl],
-            ].map(([label, url]) => {
-              const fullUrl = url ? `${staticUrl}${url}` : null;
-              const shortPath = url ? url.replace("/uploads/", "") : null;
-              const fileName = url ? url.split("/").slice(-2).join("/") : null;
-              console.log("Full URL:", fullUrl);
-              console.log("FileName", fileName);
+          {[
+            ["Aadhar Front", doc("aadhar_front")?.fileUrl],
+            ["Aadhar Back", doc("aadhar_back")?.fileUrl],
+            ["PAN Card", doc("pan")?.fileUrl],
+            ["Passbook", doc("passbook")?.fileUrl],
+          ].map(([label, url]) => {
+            const fullUrl = url ? `${staticUrl}${url}` : null;
+            const fileName = url ? url.split("/").slice(-2).join("/") : null;
 
-              return (
-                <TouchableOpacity
-                  key={label}
-                  onPress={() => fullUrl && setPreviewUrl(fullUrl)}
-                  activeOpacity={0.9}
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    backgroundColor: "#fff",
-                    padding: 14,
-                    borderRadius: 12,
-                    marginBottom: 12,
-                    borderWidth: 1,
-                    borderColor: "#e5e7eb",
-                    elevation: 2,
-                  }}
-                >
-                  {/* Thumbnail */}
-                  <View
-                    style={{
-                      width: 55,
-                      height: 55,
-                      borderRadius: 10,
-                      marginRight: 12,
-                      backgroundColor: "#f3f4f6",
-                      overflow: "hidden",
-                    }}
-                  >
-                    {fullUrl ? (
-                      <Image
-                        source={{ uri: fullUrl }}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          resizeMode: "cover",
-                        }}
-                      />
-                    ) : (
-                      <View
-                        style={{
-                          flex: 1,
-                          justifyContent: "center",
-                          alignItems: "center",
-                        }}
-                      >
-                        <Feather name="image" size={22} color="#9ca3af" />
-                      </View>
-                    )}
-                  </View>
-
-                  {/* Label */}
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontWeight: "700", fontSize: 16 }}>
-                      {label}
-                    </Text>
-
-                    {/* Show short path instead of full URL */}
-                    <Text style={{ color: "#6b7280", fontSize: 12 }}>
-                      {fileName || "Not uploaded"}
-                    </Text>
-                  </View>
-
-                  <Feather name="chevron-right" size={18} color="#9ca3af" />
-                </TouchableOpacity>
-              );
-            })}
-
-            {/* Fullscreen Image Modal */}
-            <Modal visible={!!previewUrl} transparent animationType="fade">
+            return (
               <TouchableOpacity
-                onPress={() => setPreviewUrl(null)}
-                activeOpacity={1}
-                style={{
-                  flex: 1,
-                  justifyContent: "center",
-                  alignItems: "center",
-                  backgroundColor: "rgba(0,0,0,0.9)",
-                }}
-              >
-                <Image
-                  source={{ uri: previewUrl }}
-                  style={{
-                    width: "90%",
-                    height: "75%",
-                    resizeMode: "contain",
-                    borderRadius: 12,
-                  }}
-                />
-              </TouchableOpacity>
-            </Modal>
-          </View>
-        )}
-
-        {/* BANK */}
-        {tab === "bank" && (
-          <View>
-            <Text style={{ fontSize: 18, fontWeight: "700", marginBottom: 10 }}>
-              Bank Accounts
-            </Text>
-
-            {customer.bankAccounts?.length ? (
-              customer.bankAccounts.map((acc) => (
-                <View
-                  key={acc.id}
-                  style={{
-                    backgroundColor: "#fff",
-                    padding: 14,
-                    borderRadius: 12,
-                    marginBottom: 10,
-                    borderWidth: 1,
-                    borderColor: "#e5e7eb",
-                  }}
-                >
-                  <Text style={{ fontWeight: "700" }}>{acc.bankName}</Text>
-                  <Text style={{ color: "#6b7280", marginTop: 4 }}>
-                    A/C: {acc.accountNumber}
-                  </Text>
-                  <Text style={{ color: "#6b7280" }}>IFSC: {acc.ifscCode}</Text>
-                </View>
-              ))
-            ) : (
-              <Text style={{ color: "#6b7280", marginTop: 10 }}>
-                No bank accounts added.
-              </Text>
-            )}
-          </View>
-        )}
-
-        {/* INVESTMENTS */}
-        {tab === "investments" && (
-          <View style={{ marginTop: 10 }}>
-            {/* HEADER */}
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                marginBottom: 12,
-              }}
-            >
-              <Text style={{ fontSize: 20, fontWeight: "700" }}>
-                Investments
-              </Text>
-
-              <TouchableOpacity
-                onPress={() => setShowInvestmentModal(true)}
+                key={label}
+                onPress={() => fullUrl && setPreviewUrl(fullUrl)}
+                activeOpacity={0.9}
                 style={{
                   flexDirection: "row",
                   alignItems: "center",
-                  paddingHorizontal: 12,
-                  paddingVertical: 6,
-                  backgroundColor: "#2563eb",
-                  borderRadius: 10,
+                  backgroundColor: "#fff",
+                  padding: 14,
+                  borderRadius: 12,
+                  marginBottom: 12,
+                  borderWidth: 1,
+                  borderColor: "#e5e7eb",
+                  elevation: 2,
                 }}
               >
-                <Feather name="plus" size={16} color="#fff" />
-                <Text
-                  style={{ color: "#fff", fontWeight: "600", marginLeft: 6 }}
-                >
-                  Add
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* LIST */}
-            {customer.investments?.length ? (
-              customer.investments.map((inv) => (
                 <View
-                  key={inv.id}
                   style={{
-                    backgroundColor: "#fff",
-                    padding: 14,
-                    borderRadius: 12,
-                    marginBottom: 10,
-                    borderWidth: 1,
-                    borderColor: "#e5e7eb",
+                    width: 55,
+                    height: 55,
+                    borderRadius: 10,
+                    marginRight: 12,
+                    backgroundColor: "#f3f4f6",
+                    overflow: "hidden",
                   }}
                 >
-                  <Text style={{ fontWeight: "700", fontSize: 16 }}>
-                    ₹{inv.principalAmount.toLocaleString("en-IN")}
-                  </Text>
-                  <Text style={{ color: "#6b7280" }}>
-                    {inv.type === "fd"
-                      ? "Fixed Deposit"
-                      : inv.type === "rd"
-                      ? "Recurring Deposit"
-                      : "FD+ (10% for 20M)"}
-                  </Text>
+                  {fullUrl ? (
+                    <Image
+                      source={{ uri: fullUrl }}
+                      style={{ width: "100%", height: "100%", resizeMode: "cover" }}
+                    />
+                  ) : (
+                    <View
+                      style={{
+                        flex: 1,
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Feather name="image" size={22} color="#9ca3af" />
+                    </View>
+                  )}
+                </View>
 
-                  <Text
-                    style={{ marginTop: 4, fontSize: 12, color: "#6b7280" }}
-                  >
-                    Status: {inv.status}
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontWeight: "700", fontSize: 16 }}>
+                    {label}
+                  </Text>
+                  <Text style={{ color: "#6b7280", fontSize: 12 }}>
+                    {fileName || "Not uploaded"}
                   </Text>
                 </View>
-              ))
-            ) : (
-              <Text style={{ color: "#6b7280" }}>No investments yet.</Text>
-            )}
 
-            {/* MODAL */}
-            {showInvestmentModal && (
-              <CreateInvestmentModal
-                visible={showInvestmentModal}
-                customerId={id}
-                onClose={() => setShowInvestmentModal(false)}
-                onCreated={() => fetchCustomer()} // refresh
-              />
-            )}
+                <Feather name="chevron-right" size={18} color="#9ca3af" />
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* IMAGE PREVIEW MODAL */}
+        <Modal visible={!!previewUrl} transparent animationType="fade">
+          <TouchableOpacity
+            onPress={() => setPreviewUrl(null)}
+            activeOpacity={1}
+            style={{
+              flex: 1,
+              justifyContent: "center",
+              alignItems: "center",
+              backgroundColor: "rgba(0,0,0,0.9)",
+            }}
+          >
+            <Image
+              source={{ uri: previewUrl }}
+              style={{
+                width: "90%",
+                height: "75%",
+                resizeMode: "contain",
+                borderRadius: 12,
+              }}
+            />
+          </TouchableOpacity>
+        </Modal>
+
+        {/* ========================================================= */}
+        {/*                     SECTION 2 — INVESTMENTS               */}
+        {/* ========================================================= */}
+
+        <View style={{ marginTop: 30 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              marginBottom: 12,
+            }}
+          >
+            <Text style={{ fontSize: 20, fontWeight: "800" }}>
+              Investments
+            </Text>
+
+            <TouchableOpacity
+              onPress={() => setShowInvestmentModal(true)}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                backgroundColor: "#2563eb",
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: 10,
+              }}
+            >
+              <Feather name="plus" size={16} color="#fff" />
+              <Text
+                style={{ color: "#fff", fontWeight: "600", marginLeft: 6 }}
+              >
+                Add
+              </Text>
+            </TouchableOpacity>
           </View>
-        )}
+
+          {customer.investments?.length ? (
+            customer.investments.map((inv) => (
+              <View
+                key={inv.id}
+                style={{
+                  backgroundColor: "#fff",
+                  padding: 14,
+                  borderRadius: 12,
+                  marginBottom: 10,
+                  borderWidth: 1,
+                  borderColor: "#e5e7eb",
+                }}
+              >
+                <Text style={{ fontWeight: "700", fontSize: 16 }}>
+                  ₹{inv.principalAmount.toLocaleString("en-IN")}
+                </Text>
+                <Text style={{ color: "#6b7280" }}>
+                  {inv.type === "fd"
+                    ? "Fixed Deposit"
+                    : inv.type === "rd"
+                    ? "Recurring Deposit"
+                    : "FD+ (10% for 20M)"}
+                </Text>
+
+                <Text
+                  style={{ marginTop: 4, fontSize: 12, color: "#6b7280" }}
+                >
+                  Status: {inv.status}
+                </Text>
+              </View>
+            ))
+          ) : (
+            <Text style={{ color: "#6b7280" }}>No investments yet.</Text>
+          )}
+
+          {showInvestmentModal && (
+            <CreateInvestmentModal
+              visible={showInvestmentModal}
+              customerId={id}
+              onClose={() => setShowInvestmentModal(false)}
+              onCreated={() => fetchCustomer()}
+            />
+          )}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

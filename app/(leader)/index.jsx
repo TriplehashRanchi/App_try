@@ -1,6 +1,6 @@
 import ShareModal from "@/components/leader/ShareModal";
 import { useAuth } from "@/context/AuthContext";
-import { Feather, Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { router, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -59,17 +59,6 @@ const PrimaryStatCard = ({ label, value, secondaryLabel, secondaryValue }) => {
     </TouchableOpacity>
   );
 };
-
-// 2. Grid Stat Card
-const GridStatCard = ({ icon, label, value, color }) => (
-  <View style={styles.gridCard}>
-    <View style={[styles.iconContainer, { backgroundColor: `${color}15` }]}>
-      {icon}
-    </View>
-    <Text style={styles.gridValue}>{value}</Text>
-    <Text style={styles.gridLabel}>{label}</Text>
-  </View>
-);
 
 // --- MAIN DASHBOARD ---
 
@@ -157,10 +146,10 @@ export default function LeaderDashboard() {
               Lets track your growth today.
             </Text>
           </View>
-          <TouchableOpacity style={styles.notificationBtn}>
+          {/* <TouchableOpacity style={styles.notificationBtn}>
             <Feather name="bell" size={22} color="#333" />
-            {/* <View style={styles.badge} /> */}
-          </TouchableOpacity>
+            <View style={styles.badge} />
+          </TouchableOpacity> */}
         </View>
 
         {/* PRIMARY EARNINGS CARD */}
@@ -170,6 +159,47 @@ export default function LeaderDashboard() {
           secondaryLabel="Pending Commission"
           secondaryValue={pendingCommissionAmount}
         />
+
+        {/* QUICK ACTION BUTTONS */}
+        {user?.level === "L1" ? (
+          // If leader is L1 -> show both buttons
+          <View style={styles.quickActionRow}>
+            {/* ADD CUSTOMER */}
+            <TouchableOpacity
+              style={styles.quickBtn}
+              activeOpacity={0.85}
+              onPress={() => router.push("/(leader)/add-customer")}
+            >
+              <Ionicons name="person-add-outline" size={18} color="#fff" />
+              <Text style={styles.quickBtnText}>Add Customer</Text>
+            </TouchableOpacity>
+
+            {/* ADD L2 */}
+            <TouchableOpacity
+              style={[
+                styles.quickBtn,
+                { backgroundColor: "#10B981", marginRight: 0 },
+              ]}
+              activeOpacity={0.85}
+              onPress={() => router.push("/(leader)/add-l2")}
+            >
+              <Ionicons name="people-outline" size={18} color="#fff" />
+              <Text style={styles.quickBtnText}>Add L2</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          // If leader is NOT L1 -> show only Add Customer (full width)
+          <View style={{ marginBottom: 20 }}>
+            <TouchableOpacity
+              style={[styles.quickBtn, { width: "100%", marginRight: 0 }]}
+              activeOpacity={0.85}
+              onPress={() => router.push("/(leader)/add-customer")}
+            >
+              <Ionicons name="person-add-outline" size={18} color="#fff" />
+              <Text style={styles.quickBtnText}>Add Customer</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         <OverviewStats
           totalCustomersReferred={totalCustomersReferred}
@@ -277,8 +307,7 @@ export default function LeaderDashboard() {
             </View>
           )}
         </View>
-      <OffersCarousel />
-
+        <OffersCarousel />
       </ScrollView>
 
       <ShareModal
@@ -392,6 +421,38 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
   },
+
+  quickActionRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 20,
+    marginTop: -10,
+  },
+
+  quickBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#1E6DEB",
+    paddingVertical: 15,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    gap: 8,
+    flex: 1,
+    justifyContent: "center",
+    marginRight: 10,
+    marginBottom: 12,
+  },
+
+  quickBtnText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+
   // LIST
 
   referralContainer: {

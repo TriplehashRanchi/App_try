@@ -19,7 +19,7 @@ import axiosAuth from "../../utils/axiosAuth";
 const { width } = Dimensions.get("window");
 
 export default function LeaderProfilePage() {
-  const { user,logout } = useAuth();
+  const { user, logout } = useAuth();
   const leaderId = user?.id;
 
   const [profile, setProfile] = useState(null);
@@ -112,7 +112,7 @@ export default function LeaderProfilePage() {
             <Divider />
 
             <InfoRow label="Level" value={user.level || profile.level} />
-            
+
             <Divider />
             <InfoRow
               label="Commission Rate"
@@ -187,59 +187,36 @@ export default function LeaderProfilePage() {
           ))}
         </View>
 
-          {/* ------------------------------------------------- */}
-        {/* ⭐ NEW INVESTMENTS BUTTON ⭐ */}
-        {/* ------------------------------------------------- */}
+        {/* View Investments */}
         <View style={{ paddingHorizontal: 16, marginTop: 24 }}>
           <TouchableOpacity
-            onPress={() => router.push("/investments")} // 👈 Change this path to your actual route
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: 14,
-              backgroundColor: "#387AFF", // Using your blue brand color
-              borderRadius: 10,
-              marginBottom: 12, // Space between this and Logout
-            }}
+            onPress={() => router.push("/investments")}
+            activeOpacity={0.85}
+            style={styles.modernButton}
           >
-            <Ionicons name="briefcase-outline" size={22} color="#fff" />
-            <Text
-              style={{
-                color: "white",
-                fontSize: 16,
-                fontWeight: "600",
-                marginLeft: 10,
-              }}
-            >
-              View Investments
-            </Text>
+            <View style={styles.iconContainer}>
+              <Ionicons name="briefcase-outline" size={22} color="#fff" />
+            </View>
+            <Text style={styles.modernButtonText}>View Investments</Text>
+            <Ionicons name="chevron-forward" size={20} color="#fff" />
           </TouchableOpacity>
-          </View>
+        </View>
 
+        {/* Logout */}
         <TouchableOpacity
-               onPress={logout}
-               style={{
-                 flexDirection: "row",
-                 alignItems: "center",
-                 padding: 14,
-                 backgroundColor: "#FF3B30",
-                 borderRadius: 10,
-                 marginTop: 20,
-               }}
-             >
-               <Ionicons name="log-out-outline" size={22} color="#fff" />
-               <Text
-                 style={{
-                   color: "white",
-                   fontSize: 16,
-                   fontWeight: "600",
-                   marginLeft: 10,
-                 }}
-               >
-                 Logout
-               </Text>
-             </TouchableOpacity>
+          onPress={logout}
+          activeOpacity={0.85}
+          style={[styles.modernButton, styles.logoutButton]}
+        >
+          <View style={[styles.iconContainer, { backgroundColor: "#FF453A" }]}>
+            <Ionicons name="log-out-outline" size={22} color="#fff" />
+          </View>
+          <Text style={styles.modernButtonText}>Logout</Text>
+          <Ionicons name="chevron-forward" size={20} color="#fff" />
+        </TouchableOpacity>
+
+        <View style={{ height: 40 }} />
+
         <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
@@ -427,5 +404,43 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#EEE",
     marginBottom: 12,
+  },
+  modernButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    backgroundColor: "#387AFF",
+    borderRadius: 14,
+    marginBottom: 14,
+    justifyContent: "space-between",
+    shadowColor: "#387AFF",
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+
+  logoutButton: {
+    backgroundColor: "#FF3B30",
+    marginHorizontal: 16,
+    marginTop: 20,
+  },
+
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.25)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+
+  modernButtonText: {
+    flex: 1,
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
+    marginLeft: 4,
   },
 });
