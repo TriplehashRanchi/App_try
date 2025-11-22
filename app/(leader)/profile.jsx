@@ -1,6 +1,7 @@
 "use client";
 
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   Dimensions,
@@ -27,6 +28,8 @@ export default function LeaderProfilePage() {
     if (!leaderId) return;
     fetchProfile();
   }, [leaderId]);
+
+  const router = useRouter();
 
   const fetchProfile = async () => {
     try {
@@ -183,6 +186,36 @@ export default function LeaderProfilePage() {
             </View>
           ))}
         </View>
+
+          {/* ------------------------------------------------- */}
+        {/* ⭐ NEW INVESTMENTS BUTTON ⭐ */}
+        {/* ------------------------------------------------- */}
+        <View style={{ paddingHorizontal: 16, marginTop: 24 }}>
+          <TouchableOpacity
+            onPress={() => router.push("/investments")} // 👈 Change this path to your actual route
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 14,
+              backgroundColor: "#387AFF", // Using your blue brand color
+              borderRadius: 10,
+              marginBottom: 12, // Space between this and Logout
+            }}
+          >
+            <Ionicons name="briefcase-outline" size={22} color="#fff" />
+            <Text
+              style={{
+                color: "white",
+                fontSize: 16,
+                fontWeight: "600",
+                marginLeft: 10,
+              }}
+            >
+              View Investments
+            </Text>
+          </TouchableOpacity>
+          </View>
 
         <TouchableOpacity
                onPress={logout}
