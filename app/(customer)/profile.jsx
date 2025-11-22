@@ -1,4 +1,5 @@
 "use client";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -11,6 +12,7 @@ import {
   View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "../../context/AuthContext";
 import axiosAuth from "../../utils/axiosAuth";
 
 const { width } = Dimensions.get('window');
@@ -18,6 +20,7 @@ const { width } = Dimensions.get('window');
 export default function ProfilePage() {
   const router = useRouter();
   const [profile, setProfile] = useState(null);
+  const {logout} = useAuth();
 
   useEffect(() => {
     fetchProfile();
@@ -33,6 +36,7 @@ export default function ProfilePage() {
       console.log("Profile Error:", err);
     }
   };
+  
 
   if (!profile) {
     return (
@@ -232,6 +236,29 @@ export default function ProfilePage() {
               Permanently delete your account and all associated data
             </Text>
           </TouchableOpacity>
+                <TouchableOpacity
+        onPress={logout}
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          padding: 14,
+          backgroundColor: "#FF3B30",
+          borderRadius: 10,
+          marginTop: 20,
+        }}
+      >
+        <Ionicons name="log-out-outline" size={22} color="#fff" />
+        <Text
+          style={{
+            color: "white", 
+            fontSize: 16,
+            fontWeight: "600",
+            marginLeft: 10,
+          }}
+        >
+          Logout
+        </Text>
+      </TouchableOpacity>
         </View>
 
         <View style={{ height: 40 }} />
