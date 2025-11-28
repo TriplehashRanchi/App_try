@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   Dimensions,
@@ -12,7 +13,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import axiosAuth from "../../../../utils/axiosAuth";
-import { useLocalSearchParams, useRouter } from "expo-router";
 
 const { width } = Dimensions.get("window");
 
@@ -57,7 +57,7 @@ export default function ProfilePage() {
     return "••••••" + value.slice(-4).toUpperCase();
   };
 
-  const BASE = "https://bp4lm8pt-5050.inc1.devtunnels.ms";
+  const BASE = "https://api.rmclub.co";
 
   // Calculate total investment
   const totalInvestment =

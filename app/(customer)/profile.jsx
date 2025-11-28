@@ -62,7 +62,7 @@ export default function ProfilePage() {
     return "••••••" + value.slice(-4).toUpperCase();
   };
 
-  const BASE = "https://8xkbnlt0-5050.inc1.devtunnels.ms";
+  const BASE = "https://api.rmclub.co";
 
   // Calculate total investment
   const totalInvestment = profile.investments?.reduce(

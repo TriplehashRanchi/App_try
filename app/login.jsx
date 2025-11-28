@@ -1,9 +1,11 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -19,43 +21,26 @@ export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
   const [error, setError] = useState("");
 
   const handleLogin = async () => {
-    console.log("🔥 Login button pressed");
-
     if (!username || !password) {
-      setError("Please enter both username and password.");
+      setError("Enter username & password");
       return;
     }
-
     setSubmitting(true);
     setError("");
 
     try {
       const user = await login(username, password);
-      console.log("➡️ POST LOGIN USER:", user);
-
-      if (!user) {
-        setError("Login error: User object missing");
-        return;
-      }
-
-      // ROLE REDIRECT
-      if (user.primaryRole === "admin") {
-        router.replace("/(admin)");
-      } else if (user.primaryRole === "leader") {
-        router.replace("/(leader)");
-      } else if(user.primaryRole === "manager") {
-        router.replace("/(manager)");
-      }
-       else {
-        router.replace("/(customer)");
-      }
+      if (user.primaryRole === "admin") router.replace("/(admin)");
+      else if (user.primaryRole === "leader") router.replace("/(leader)");
+      else if (user.primaryRole === "manager") router.replace("/(manager)");
+      else router.replace("/(customer)");
     } catch (err) {
-      const msg =
-        err?.response?.data?.message || "Login failed. Check credentials.";
-      setError(msg);
+      setError(err?.response?.data?.message || "Login Failed");
     } finally {
       setSubmitting(false);
     }
@@ -65,103 +50,141 @@ export default function Login() {
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
+      keyboardVerticalOffset={Platform.select({ ios: 70, android: 0 })}
     >
-      <View style={styles.card}>
-        <Text style={styles.title}>RM Club</Text>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.wrapper}>
+          <Text style={styles.title}>RM Club</Text>
+          <Text style={styles.subtitle}>Sign in to continue</Text>
 
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          {error ? <Text style={styles.error}>{error}</Text> : null}
 
-        <Text style={styles.label}>Username</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter username"
-          placeholderTextColor="#777"
-          value={username}
-          onChangeText={setUsername}
-        />
+          {/* USERNAME */}
+          <View style={styles.inputRow}>
+            <Ionicons name="person-outline" size={20} color="#6C727F" />
+            <TextInput
+              style={styles.input}
+              placeholder="Username"
+              placeholderTextColor="#9E9E9E"
+              autoCapitalize="none"
+              value={username}
+              onChangeText={setUsername}
+            />
+          </View>
 
-        <Text style={styles.label}>Password</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter password"
-          placeholderTextColor="#777"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
+          {/* PASSWORD */}
+         <View style={styles.inputRow}>
+  <Ionicons name="lock-closed-outline" size={20} color="#6C727F" />
+  <TextInput
+    style={styles.input}
+    placeholder="Password"
+    placeholderTextColor="#9E9E9E"
+    secureTextEntry={!showPassword}
+    value={password}
+    onChangeText={setPassword}
+  />
+  <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+    <Ionicons
+      name={showPassword ? "eye-off-outline" : "eye-outline"}
+      size={20}
+      color="#6C727F"
+    />
+  </TouchableOpacity>
+</View>
 
-        <TouchableOpacity
-          onPress={handleLogin}
-          disabled={submitting}
-          style={[styles.button, submitting && styles.buttonDisabled]}
-        >
-          {submitting ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Login</Text>
-          )}
-        </TouchableOpacity>
-      </View>
+
+          <TouchableOpacity
+            onPress={handleLogin}
+            disabled={submitting}
+            style={[styles.button, submitting && { opacity: 0.8 }]}
+            activeOpacity={0.9}
+          >
+            {submitting ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text style={styles.buttonText}>Sign in</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => router.push("/forgot-password")}>
+            <Text style={styles.forgot}>Forgot password?</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F4F6F9",
-    justifyContent: "center",
-    paddingHorizontal: 24,
-  },
-  card: {
-    backgroundColor: "white",
-    padding: 24,
-    borderRadius: 16,
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "700",
-    textAlign: "center",
-    marginBottom: 24,
-    color: "#1E6DEB",
-  },
-  label: {
-    fontSize: 14,
-    color: "#333",
-    marginBottom: 6,
-  },
-  input: {
-    backgroundColor: "#F2F3F5",
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    marginBottom: 18,
-    fontSize: 16,
-  },
-  button: {
-    backgroundColor: "#1E6DEB",
-    paddingVertical: 14,
-    borderRadius: 10,
+  container: { flex: 1, backgroundColor: "#FFFFFF" },
+  scroll: { flexGrow: 1, justifyContent: "start", paddingVertical: 180 },
+  wrapper: {
+    paddingHorizontal: 32,
     alignItems: "center",
   },
-  buttonDisabled: {
-    backgroundColor: "#9EC4FF",
+  title: {
+    fontSize: 34,
+    fontWeight: "600",
+    color: "#202124",
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "#5F6368",
+    marginBottom: 36,
+  },
+
+  error: {
+    width: "100%",
+    backgroundColor: "#FDECEA",
+    borderColor: "#F5C6C4",
+    borderWidth: 1,
+    color: "#B3261E",
+    fontSize: 14,
+    padding: 12,
+    borderRadius: 6,
+    marginBottom: 20,
+  },
+
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    borderColor: "#DADCE0",
+    borderWidth: 1,
+    borderRadius: 8,
+    marginBottom: 22,
+    paddingHorizontal: 14,
+    height: 52,
+    gap: 8,
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    color: "#202124",
+  },
+
+  button: {
+    backgroundColor: "#1A73E8",
+    width: "100%",
+    paddingVertical: 15,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 8,
   },
   buttonText: {
-    color: "white",
+    color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",
   },
-  errorText: {
-    backgroundColor: "#FFE6E6",
-    color: "#D62828",
-    padding: 10,
-    borderRadius: 8,
+
+  forgot: {
+    marginTop: 18,
     fontSize: 14,
-    marginBottom: 16,
+    color: "#1A73E8",
   },
 });

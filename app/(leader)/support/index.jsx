@@ -21,7 +21,7 @@ import { io } from "socket.io-client";
 dayjs.extend(relativeTime);
 
 // Replace with your actual backend URL
-const SOCKET_URL = "https://8xkbnlt0-5050.inc1.devtunnels.ms"; 
+const SOCKET_URL = "https://api.rmclub.co"; 
 
 export default function SupportChatScreen() {
   const { axiosAuth, user } = useAuth();

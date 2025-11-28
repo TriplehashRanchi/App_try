@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   Dimensions,
@@ -12,7 +13,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import axiosAuth from "../../../../utils/axiosAuth";
-import { useLocalSearchParams, useRouter } from "expo-router";
 
 const { width } = Dimensions.get("window");
 
@@ -52,7 +52,7 @@ export default function LeaderProfilePage() {
     return "••••••" + value.slice(-4);
   };
 
-  const BASE = "https://bp4lm8pt-5050.inc1.devtunnels.ms"; // replace as needed
+  const BASE = "https://api.rmclub.co"; // replace as needed
 
   // Total Commission Earned
   const totalCommission = profile.commissions?.reduce(

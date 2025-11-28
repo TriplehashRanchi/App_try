@@ -1,7 +1,7 @@
 export default {
   expo: {
-    name: "my-app",
-    slug: "my-app",
+    name: "Rm Club",
+    slug: "rm-club",
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/images/icon.png",
@@ -16,9 +16,16 @@ export default {
     },
 
     ios: {
-      supportsTablet: true
+      supportsTablet: true,
+      bundleIdentifier: "co.rmclub.app",
+      buildNumber: "1.0.0",
+      infoPlist: {
+        NSCameraUsageDescription: "This app uses the camera to scan QR codes.",
+        NSPhotoLibraryUsageDescription: "This app needs access to your photo library to select profile pictures."
+      }
     },
     android: {
+      package: "com.rmclub.app",
       adaptiveIcon: {
         backgroundColor: "#E6F4FE",
         foregroundImage: "./assets/images/android-icon-foreground.png",

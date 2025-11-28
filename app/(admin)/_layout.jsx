@@ -1,6 +1,6 @@
+import { Ionicons } from "@expo/vector-icons";
 import { Redirect, Tabs } from "expo-router";
 import { useAuth } from "../../context/AuthContext";
-import { Ionicons } from "@expo/vector-icons";
 
 export default function AdminLayout() {
   const { user, loading } = useAuth();
@@ -93,6 +93,19 @@ export default function AdminLayout() {
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons
               name={focused ? "calendar" : "calendar-outline"}
+              size={size}
+              color={focused ? "#00C285" : "#7A7A7A"}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="support"
+        options={{
+          title: "Support",
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons 
+              name={focused ? "chatbubbles" : "chatbubbles-outline"}
               size={size}
               color={focused ? "#00C285" : "#7A7A7A"}
             />

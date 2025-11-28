@@ -23,7 +23,7 @@ export default function CustomerDetailPage() {
   const [showInvestmentModal, setShowInvestmentModal] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
 
-  const staticUrl = "https://8xkbnlt0-5050.inc1.devtunnels.ms";
+  const staticUrl = "https://api.rmclub.co";
 
   const fetchCustomer = useCallback(async () => {
     if (!axiosAuth || !id) return;

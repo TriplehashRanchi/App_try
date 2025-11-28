@@ -3,22 +3,22 @@
 import { useAuth } from "@/context/AuthContext";
 import { useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  FlatList,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { io } from "socket.io-client";
 
-const SOCKET_URL = 'https://8xkbnlt0-5050.inc1.devtunnels.ms';
+const SOCKET_URL = 'https://api.rmclub.co';
 
 export default function SupportAdminPage() {
   const { axiosAuth, user, isLoggedIn, loading } = useAuth();

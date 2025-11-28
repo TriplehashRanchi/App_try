@@ -59,7 +59,7 @@ export default function SupportChatBox() {
   useEffect(() => {
     if (!isLoggedIn) return;
 
-    const socket = io('https://8xkbnlt0-5050.inc1.devtunnels.ms', {
+    const socket = io('https://api.rmclub.co', {
       transports: ["websocket"],
       reconnection: true,
       reconnectionDelay: 1000,
