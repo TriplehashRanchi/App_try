@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Redirect, Tabs } from "expo-router";
-import { useAuth } from "../../context/AuthContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useAuth } from "../../context/AuthContext";
 
 export default function AdminLayout() {
   const { user, loading } = useAuth();
@@ -15,30 +15,31 @@ export default function AdminLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: "#1E6DEB",
+        tabBarActiveTintColor: "#00C285",
         tabBarInactiveTintColor: "#7A7A7A",
         headerShown: false,
 
         tabBarLabelStyle: {
           fontSize: 10,
           fontWeight: "600",
-          color: "#7A7A7A",
         },
 
         tabBarStyle: {
           borderTopWidth: 0.5,
-          borderTopColor: "#f9f7f7ff",
-          paddingTop: 10,
+          borderTopColor: "#f0f0f0",
+          paddingTop: 8,
           paddingBottom: tabBarPaddingBottom,
           height: 64 + bottom,
         },
       }}
     >
+
+      {/* 1 — Dashboard */}
       <Tabs.Screen
         name="index"
         options={{
           title: "Dashboard",
-          tabBarIcon: ({ color, size, focused }) => (
+          tabBarIcon: ({ size, focused }) => (
             <Ionicons
               name={focused ? "home" : "home-outline"}
               size={size}
@@ -48,11 +49,12 @@ export default function AdminLayout() {
         }}
       />
 
+      {/* 2 — Customers */}
       <Tabs.Screen
         name="customers"
         options={{
           title: "Customers",
-          tabBarIcon: ({ color, size, focused }) => (
+          tabBarIcon: ({ size, focused }) => (
             <Ionicons
               name={focused ? "people" : "people-outline"}
               size={size}
@@ -62,11 +64,12 @@ export default function AdminLayout() {
         }}
       />
 
+      {/* 3 — Leaders */}
       <Tabs.Screen
         name="leaders"
         options={{
           title: "Leaders",
-          tabBarIcon: ({ color, size, focused }) => (
+          tabBarIcon: ({ size, focused }) => (
             <Ionicons
               name={focused ? "ribbon" : "ribbon-outline"}
               size={size}
@@ -76,11 +79,12 @@ export default function AdminLayout() {
         }}
       />
 
+      {/* 4 — Investments */}
       <Tabs.Screen
         name="insvestment"
         options={{
           title: "Investments",
-          tabBarIcon: ({ color, size, focused }) => (
+          tabBarIcon: ({ size, focused }) => (
             <Ionicons
               name={focused ? "cash" : "cash-outline"}
               size={size}
@@ -89,25 +93,14 @@ export default function AdminLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="meeting"
-        options={{
-          title: "Meetings",
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons
-              name={focused ? "calendar" : "calendar-outline"}
-              size={size}
-              color={focused ? "#00C285" : "#7A7A7A"}
-            />
-          ),
-        }}
-      />
+
+      {/* 5 — Support */}
       <Tabs.Screen
         name="support"
         options={{
           title: "Support",
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons 
+          tabBarIcon: ({ size, focused }) => (
+            <Ionicons
               name={focused ? "chatbubbles" : "chatbubbles-outline"}
               size={size}
               color={focused ? "#00C285" : "#7A7A7A"}
@@ -115,6 +108,12 @@ export default function AdminLayout() {
           ),
         }}
       />
+
+      {/* ❌ Hidden pages — not visible tab items */}
+      <Tabs.Screen name="meeting" options={{ href: null }} />
+      <Tabs.Screen name="targets" options={{ href: null }} />
+      <Tabs.Screen name="settings" options={{ href: null }} />
+
     </Tabs>
   );
 }

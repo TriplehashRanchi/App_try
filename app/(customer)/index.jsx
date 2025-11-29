@@ -11,6 +11,7 @@ import { useAuth } from "@/context/AuthContext";
 import { calculateInvestmentAnalytics } from "@/utils/financeCalculators";
 import { registerForPushNotificationsAsync } from "@/utils/notifications";
 import OffersCarousel from "../../components/customer/OfferCarousel";
+import TargetTracker from "../../components/customer/TargetTracker";
 
 const TargetStrip = ({ targets }) => {
   return (
@@ -65,6 +66,7 @@ export default function DashboardScreen() {
   const [investments, setInvestments] = useState([]);
   const [targets, setTargets] = useState([]);
   const [loading, setLoading] = useState(true);
+   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
   registerForPushNotificationsAsync().then((t) => console.log("TOKEN:", t));
@@ -121,6 +123,8 @@ export default function DashboardScreen() {
         ) : null}
         <PortfolioSummaryCard investments={investments} />
         <InvestmentList investments={investments} />
+
+        <TargetTracker refreshTrigger={refreshing} />
         <OffersCarousel/>
       </ScrollView>
     </SafeAreaView>

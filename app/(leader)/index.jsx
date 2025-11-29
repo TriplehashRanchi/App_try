@@ -16,6 +16,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import OffersCarousel from "../../components/customer/OfferCarousel";
 import OverviewStats from "../../components/leader/OverviewStats";
+import TargetTracker from "../../components/leader/TargetTracker";
 
 const { width } = Dimensions.get("window");
 
@@ -254,6 +255,8 @@ export default function LeaderDashboard() {
             </TouchableOpacity>
           </View>
         )}
+
+        <TargetTracker refreshTrigger={refreshing} />
 
         <OverviewStats
           totalCustomersReferred={totalCustomersReferred}
@@ -724,9 +727,6 @@ const styles = StyleSheet.create({
   },
   statusActive: {
     backgroundColor: "#DCFCE7",
-  },
-  statusPending: {
-    backgroundColor: "#FEF3C7",
   },
   statusText: {
     fontSize: 10,

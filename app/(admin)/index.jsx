@@ -11,8 +11,9 @@ import InvestmentBreakdownCard from "@/components/admin/InvestmentBreakdownCard"
 import LeaderPerformance from "@/components/admin/LeaderPerformance";
 import RecentCustomers from "@/components/admin/RecentCustomers";
 import StatsOverview from "@/components/admin/StatsOverview";
-import TodaysInvestments from "@/components/admin/TodaysInvestments"; 
- import UpcomingMeetings from "@/components/admin/UpcomingMeetings";
+import TodaysInvestments from "@/components/admin/TodaysInvestments";
+import UpcomingMeetings from "@/components/admin/UpcomingMeetings";
+import TwoActionButtons from "../../components/admin/TwoActionButton";
 
 export default function AdminDashboard() {
   const { axiosAuth, user } = useAuth();
@@ -94,6 +95,10 @@ const [upcomingMeetings, setUpcomingMeetings] = useState([]);
         <DashboardHeader user={user} />
         <StatsOverview stats={generalStats} />
         <InvestmentBreakdownCard investments={investments} />
+         <TwoActionButtons
+          targetRoute="/(admin)/targets"
+          meetingRoute="/(admin)/meeting"
+        />
         <TodaysInvestments investments={investments} />
         <UpcomingMeetings meetings={upcomingMeetings} />
         <RecentCustomers customers={customers} />
