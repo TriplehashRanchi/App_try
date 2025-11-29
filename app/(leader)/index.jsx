@@ -67,6 +67,7 @@ export default function LeaderDashboard() {
   const [summary, setSummary] = useState(null);
   const [investmentSummary, setInvestmentSummary] = useState(null);
   const [offers, setOffers] = useState([]);
+  const [targets, setTargets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [currentBanner, setCurrentBanner] = useState(0);
@@ -75,14 +76,23 @@ export default function LeaderDashboard() {
   const fetchData = useCallback(async () => {
     if (!user) return;
     try {
-      const [dashboardRes, investmentRes, offerRes] = await Promise.all([
+      const targetPromise = axiosAuth()
+        .get(`/targets/user/my`)
+        .catch((err) => {
+          console.log("Leader targets fetch error:", err?.response || err);
+          return { data: [] };
+        });
+
+      const [dashboardRes, investmentRes, offerRes, targetRes] = await Promise.all([
         axiosAuth().get(`/leaders/${user.id}/dashboard-summary`),
         axiosAuth().get(`/leaders/${user.id}/investments-summary`),
         axiosAuth().get(`/offer-banners`),
+        targetPromise,
       ]);
       setSummary(dashboardRes.data);
       setInvestmentSummary(investmentRes.data);
       setOffers(offerRes.data || []);
+      setTargets(targetRes?.data || []);
     } catch (e) {
       console.log("Dashboard Error:", e);
     } finally {
@@ -151,6 +161,50 @@ export default function LeaderDashboard() {
             <View style={styles.badge} />
           </TouchableOpacity> */}
         </View>
+
+        {/* ACTIVE TARGETS */}
+        {targets?.length ? (
+          <View style={styles.targetSection}>
+            <View style={styles.targetHeader}>
+              <Text style={styles.targetTitle}>Your Targets</Text>
+              <Text style={styles.targetCount}>{targets.length} active</Text>
+            </View>
+            {targets.map((t) => {
+              const progress = Math.min(t?.progress || 0, 150);
+              const remaining = Math.max((t?.targetAmount || 0) - (t?.achievedAmount || 0), 0);
+              const achieved = t?.status === "achieved";
+              return (
+                <View key={t.id} style={styles.targetCard}>
+                  <View style={styles.targetTopRow}>
+                    <Text style={styles.targetLabel}>
+                      {t.targetType === "leader" ? "Team Target" : "Customer Target"}
+                    </Text>
+                    <Text style={[styles.targetStatus, achieved ? styles.statusAchieved : styles.statusPending]}>
+                      {achieved ? "Achieved" : "In Progress"}
+                    </Text>
+                  </View>
+                  <Text style={styles.targetAmount}>
+                    ₹{(t.targetAmount || 0).toLocaleString("en-IN")}
+                  </Text>
+                  <Text style={styles.targetMeta}>
+                    {achieved ? "Completed" : `₹${remaining.toLocaleString("en-IN")} to go`}
+                    {t.daysLeft !== undefined ? ` • ${t.daysLeft} day${t.daysLeft === 1 ? "" : "s"} left` : ""}
+                  </Text>
+                  {t.rewardDescription ? (
+                    <Text style={styles.rewardText}>{t.rewardDescription}</Text>
+                  ) : null}
+                  <View style={styles.progressTrack}>
+                    <View style={[styles.progressFill, { width: `${Math.min(progress, 100)}%` }]} />
+                  </View>
+                  <Text style={styles.progressText}>
+                    {Math.round(progress)}% • ₹{(t.achievedAmount || 0).toLocaleString("en-IN")} / ₹
+                    {(t.targetAmount || 0).toLocaleString("en-IN")}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        ) : null}
 
         {/* PRIMARY EARNINGS CARD */}
         <PrimaryStatCard
@@ -355,6 +409,103 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#6B7280",
     marginTop: 2,
+  },
+  targetSection: {
+    marginBottom: 22,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  targetHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  targetTitle: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#111827",
+  },
+  targetCount: {
+    fontSize: 13,
+    color: "#6B7280",
+    fontWeight: "600",
+  },
+  targetCard: {
+    backgroundColor: "#F8FAFF",
+    borderRadius: 10,
+    padding: 14,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  targetTopRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  targetLabel: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#1E40AF",
+    letterSpacing: 0.2,
+  },
+  targetStatus: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  statusAchieved: {
+    backgroundColor: "#DCFCE7",
+    color: "#166534",
+  },
+  statusPending: {
+    backgroundColor: "#FEF3C7",
+    color: "#92400E",
+  },
+  targetAmount: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: "#0F172A",
+  },
+  targetMeta: {
+    marginTop: 2,
+    fontSize: 13,
+    color: "#4B5563",
+    fontWeight: "600",
+  },
+  rewardText: {
+    marginTop: 8,
+    fontSize: 13,
+    color: "#1E3A8A",
+    fontWeight: "600",
+  },
+  progressTrack: {
+    height: 8,
+    backgroundColor: "#E5E7EB",
+    borderRadius: 10,
+    marginTop: 10,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    backgroundColor: "#1E6DEB",
+  },
+  progressText: {
+    marginTop: 6,
+    fontSize: 12,
+    color: "#6B7280",
+    fontWeight: "700",
   },
   notificationBtn: {
     padding: 10,

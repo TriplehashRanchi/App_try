@@ -12,11 +12,13 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
   const { login } = useAuth();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -47,79 +49,84 @@ export default function Login() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={Platform.select({ ios: 70, android: 0 })}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+    <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.select({ ios: 70, android: 0 })}
       >
-        <View style={styles.wrapper}>
-          <Text style={styles.title}>RM Club</Text>
-          <Text style={styles.subtitle}>Sign in to continue</Text>
+        <ScrollView
+          contentContainerStyle={[
+            styles.scroll,
+            { paddingBottom: Math.max(32, insets.bottom + 16) },
+          ]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.wrapper}>
+            <Text style={styles.title}>RM Club</Text>
+            <Text style={styles.subtitle}>Sign in to continue</Text>
 
-          {error ? <Text style={styles.error}>{error}</Text> : null}
+            {error ? <Text style={styles.error}>{error}</Text> : null}
 
-          {/* USERNAME */}
-          <View style={styles.inputRow}>
-            <Ionicons name="person-outline" size={20} color="#6C727F" />
-            <TextInput
-              style={styles.input}
-              placeholder="Username"
-              placeholderTextColor="#9E9E9E"
-              autoCapitalize="none"
-              value={username}
-              onChangeText={setUsername}
-            />
+            {/* USERNAME */}
+            <View style={styles.inputRow}>
+              <Ionicons name="person-outline" size={20} color="#6C727F" />
+              <TextInput
+                style={styles.input}
+                placeholder="Username"
+                placeholderTextColor="#9E9E9E"
+                autoCapitalize="none"
+                value={username}
+                onChangeText={setUsername}
+              />
+            </View>
+
+            {/* PASSWORD */}
+            <View style={styles.inputRow}>
+              <Ionicons name="lock-closed-outline" size={20} color="#6C727F" />
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                placeholderTextColor="#9E9E9E"
+                secureTextEntry={!showPassword}
+                value={password}
+                onChangeText={setPassword}
+              />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                <Ionicons
+                  name={showPassword ? "eye-off-outline" : "eye-outline"}
+                  size={20}
+                  color="#6C727F"
+                />
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              onPress={handleLogin}
+              disabled={submitting}
+              style={[styles.button, submitting && { opacity: 0.8 }]}
+              activeOpacity={0.9}
+            >
+              {submitting ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text style={styles.buttonText}>Sign in</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => router.push("/forgot-password")}>
+              <Text style={styles.forgot}>Forgot password?</Text>
+            </TouchableOpacity>
           </View>
-
-          {/* PASSWORD */}
-         <View style={styles.inputRow}>
-  <Ionicons name="lock-closed-outline" size={20} color="#6C727F" />
-  <TextInput
-    style={styles.input}
-    placeholder="Password"
-    placeholderTextColor="#9E9E9E"
-    secureTextEntry={!showPassword}
-    value={password}
-    onChangeText={setPassword}
-  />
-  <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-    <Ionicons
-      name={showPassword ? "eye-off-outline" : "eye-outline"}
-      size={20}
-      color="#6C727F"
-    />
-  </TouchableOpacity>
-</View>
-
-
-          <TouchableOpacity
-            onPress={handleLogin}
-            disabled={submitting}
-            style={[styles.button, submitting && { opacity: 0.8 }]}
-            activeOpacity={0.9}
-          >
-            {submitting ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <Text style={styles.buttonText}>Sign in</Text>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => router.push("/forgot-password")}>
-            <Text style={styles.forgot}>Forgot password?</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
   container: { flex: 1, backgroundColor: "#FFFFFF" },
   scroll: { flexGrow: 1, justifyContent: "start", paddingVertical: 180 },
   wrapper: {

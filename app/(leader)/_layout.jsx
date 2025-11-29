@@ -1,9 +1,12 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Redirect, Tabs } from "expo-router";
 import { useAuth } from "../../context/AuthContext";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function LeaderLayout() {
   const { user, loading } = useAuth();
+  const { bottom } = useSafeAreaInsets();
+  const tabBarPaddingBottom = Math.max(8, bottom + 6);
 
   if (loading) return null;
   if (!user) return <Redirect href="/login" />;
@@ -18,8 +21,8 @@ export default function LeaderLayout() {
         tabBarStyle: {
           borderTopWidth: 0.5,
           borderTopColor: "#ddd",
-          paddingBottom: 4,
-          height: 60,
+          paddingBottom: tabBarPaddingBottom,
+          height: 56 + bottom,
           backgroundColor: "#fff",
         },
         tabBarLabelStyle: {

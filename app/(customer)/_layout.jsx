@@ -66,10 +66,13 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Redirect, Tabs } from "expo-router";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../../context/AuthContext";
 
 export default function CustomerLayout() {
   const { user, loading } = useAuth();
+  const { bottom } = useSafeAreaInsets();
+  const tabBarPaddingBottom = Math.max(8, bottom + 6);
 
   if (loading) return null;
   if (!user) return <Redirect href="/login" />;
@@ -85,9 +88,9 @@ export default function CustomerLayout() {
           tabBarStyle: {
             borderTopWidth: 1,
             borderTopColor: "#E8E8E8",
-            paddingBottom: 8,
+            paddingBottom: tabBarPaddingBottom,
             paddingTop: 8,
-            height: 64,
+            height: 56 + bottom,
             backgroundColor: "#fff",
           },
           tabBarLabelStyle: {

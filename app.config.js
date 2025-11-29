@@ -17,7 +17,7 @@ export default {
 
     ios: {
       supportsTablet: true,
-      bundleIdentifier: "co.rmclub.app",
+      bundleIdentifier: "co.rmclubranchi.app",
       buildNumber: "1.0.0",
       infoPlist: {
         NSCameraUsageDescription: "This app uses the camera to scan QR codes.",
@@ -25,7 +25,7 @@ export default {
       }
     },
     android: {
-      package: "com.rmclub.app",
+      package: "com.rmclubranchi.app",
       adaptiveIcon: {
         backgroundColor: "#E6F4FE",
         foregroundImage: "./assets/images/android-icon-foreground.png",
