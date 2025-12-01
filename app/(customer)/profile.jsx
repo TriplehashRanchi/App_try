@@ -20,17 +20,21 @@ const { width } = Dimensions.get('window');
 export default function ProfilePage() {
   const router = useRouter();
   const [profile, setProfile] = useState(null);
-  const {logout} = useAuth();
+  
+  // 1. Get the 'user' object from context
+  const { user, logout } = useAuth();
 
   useEffect(() => {
-    fetchProfile();
-  }, []);
+    // 2. Only fetch if user exists
+    if (user?.id) {
+      fetchProfile();
+    }
+  }, [user]); // Run whenever user changes
 
   const fetchProfile = async () => {
     try {
-      const res = await axiosAuth.get(
-        "/customers/1263fa59-b87d-408a-8575-33beb8052141"
-      );
+      // 3. Dynamic URL using user.id
+      const res = await axiosAuth.get(`/customers/${user.id}`);
       setProfile(res.data);
     } catch (err) {
       console.log("Profile Error:", err);
@@ -90,7 +94,7 @@ export default function ProfilePage() {
           
           <View style={styles.statusBadge}>
             <View style={styles.statusDot} />
-            <Text style={styles.statusText}>{profile.status.toUpperCase()}</Text>
+            <Text style={styles.statusText}>{profile.status ? profile.status.toUpperCase() : 'ACTIVE'}</Text>
           </View>
         </View>
 
@@ -141,72 +145,26 @@ export default function ProfilePage() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Bank Accounts</Text>
           
-          {profile.bankAccounts?.map((bank, index) => (
-            <View key={bank.id} style={[styles.card, index > 0 && { marginTop: 12 }]}>
-              <View style={styles.bankHeader}>
-                <View style={styles.bankIcon}>
-                  <Text style={styles.bankIconText}>🏦</Text>
+          {profile.bankAccounts?.length > 0 ? (
+            profile.bankAccounts.map((bank, index) => (
+              <View key={bank.id} style={[styles.card, index > 0 && { marginTop: 12 }]}>
+                <View style={styles.bankHeader}>
+                  <View style={styles.bankIcon}>
+                    <Text style={styles.bankIconText}>🏦</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.bankName}>{bank.bankName}</Text>
+                    <Text style={styles.bankAccount}>{maskFull(bank.accountNumber)}</Text>
+                  </View>
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.bankName}>{bank.bankName}</Text>
-                  <Text style={styles.bankAccount}>{maskFull(bank.accountNumber)}</Text>
-                </View>
+                <Divider />
+                <InfoRow label="IFSC Code" value={bank.ifscCode} />
               </View>
-              <Divider />
-              <InfoRow label="IFSC Code" value={bank.ifscCode} />
-            </View>
-          ))}
+            ))
+          ) : (
+            <Text style={{color: '#999', fontStyle: 'italic'}}>No bank accounts found.</Text>
+          )}
         </View>
-
-        {/* INVESTMENTS */}
-        {/* <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Investments</Text>
-          
-          {profile.investments?.map((inv, index) => (
-            <View key={inv.id} style={[styles.card, index > 0 && { marginTop: 12 }]}>
-              <View style={styles.investmentHeader}>
-                <View>
-                  <Text style={styles.investmentType}>
-                    {inv.type.toUpperCase().replace('_', ' ')}
-                  </Text>
-                  <Text style={styles.investmentAmount}>
-                    ₹{inv.principalAmount?.toLocaleString('en-IN')}
-                  </Text>
-                </View>
-                <View style={styles.investmentBadge}>
-                  <Text style={styles.investmentRate}>
-                    {(inv.interestRate * 100).toFixed(1)}% p.a.
-                  </Text>
-                </View>
-              </View>
-              <Divider />
-              <View style={styles.investmentDetails}>
-                <View style={styles.investmentDetailItem}>
-                  <Text style={styles.investmentDetailLabel}>Start Date</Text>
-                  <Text style={styles.investmentDetailValue}>
-                    {new Date(inv.startDate).toLocaleDateString('en-IN')}
-                  </Text>
-                </View>
-                {inv.lockInPeriodMonths !== null && (
-                  <View style={styles.investmentDetailItem}>
-                    <Text style={styles.investmentDetailLabel}>Lock-in</Text>
-                    <Text style={styles.investmentDetailValue}>
-                      {inv.lockInPeriodMonths} months
-                    </Text>
-                  </View>
-                )}
-                {inv.rdPeriodMonths !== null && (
-                  <View style={styles.investmentDetailItem}>
-                    <Text style={styles.investmentDetailLabel}>Period</Text>
-                    <Text style={styles.investmentDetailValue}>
-                      {inv.rdPeriodMonths} months
-                    </Text>
-                  </View>
-                )}
-              </View>
-            </View>
-          ))}
-        </View> */}
 
         {/* DOCUMENTS */}
         <View style={styles.section}>
@@ -225,6 +183,9 @@ export default function ProfilePage() {
                 </Text>
               </View>
             ))}
+            {(!profile.documents || profile.documents.length === 0) && (
+               <Text style={{color: '#999', fontStyle: 'italic', width: '100%'}}>No documents uploaded.</Text>
+            )}
           </View>
         </View>
 
@@ -236,29 +197,31 @@ export default function ProfilePage() {
               Permanently delete your account and all associated data
             </Text>
           </TouchableOpacity>
-                <TouchableOpacity
-        onPress={logout}
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          padding: 14,
-          backgroundColor: "#FF3B30",
-          borderRadius: 10,
-          marginTop: 20,
-        }}
-      >
-        <Ionicons name="log-out-outline" size={22} color="#fff" />
-        <Text
-          style={{
-            color: "white", 
-            fontSize: 16,
-            fontWeight: "600",
-            marginLeft: 10,
-          }}
-        >
-          Logout
-        </Text>
-      </TouchableOpacity>
+          
+          <TouchableOpacity
+            onPress={logout}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 14,
+              backgroundColor: "#FF3B30",
+              borderRadius: 10,
+              marginTop: 20,
+            }}
+          >
+            <Ionicons name="log-out-outline" size={22} color="#fff" />
+            <Text
+              style={{
+                color: "white", 
+                fontSize: 16,
+                fontWeight: "600",
+                marginLeft: 10,
+              }}
+            >
+              Logout
+            </Text>
+          </TouchableOpacity>
         </View>
 
         <View style={{ height: 40 }} />
@@ -271,7 +234,7 @@ function InfoRow({ label, value }) {
   return (
     <View style={styles.infoRow}>
       <Text style={styles.infoLabel}>{label}</Text>
-      <Text style={styles.infoValue}>{value}</Text>
+      <Text style={styles.infoValue}>{value || '-'}</Text>
     </View>
   );
 }
@@ -462,61 +425,6 @@ const styles = StyleSheet.create({
   bankAccount: {
     fontSize: 13,
     color: "#666",
-  },
-
-  investmentHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    paddingBottom: 12,
-  },
-
-  investmentType: {
-    fontSize: 13,
-    color: "#666",
-    marginBottom: 4,
-    fontWeight: "500",
-  },
-
-  investmentAmount: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#222",
-  },
-
-  investmentBadge: {
-    backgroundColor: "#EDFCF2",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 6,
-  },
-
-  investmentRate: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#00A881",
-  },
-
-  investmentDetails: {
-    flexDirection: "row",
-    paddingTop: 12,
-    gap: 20,
-  },
-
-  investmentDetailItem: {
-    flex: 1,
-  },
-
-  investmentDetailLabel: {
-    fontSize: 11,
-    color: "#888",
-    marginBottom: 4,
-  },
-
-  investmentDetailValue: {
-    fontSize: 13,
-    color: "#222",
-    fontWeight: "500",
   },
 
   documentsGrid: {
