@@ -621,6 +621,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
+    marginBottom: -25,
   },
 
   center: {

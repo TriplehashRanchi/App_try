@@ -5,17 +5,17 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  FlatList,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    FlatList,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -144,8 +144,9 @@ export default function AddCustomerStep2() {
     !kycErrors.aadhar && !kycErrors.pan && !kycErrors.account;
 
   return (
+    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "0" : "0"} style={{ flex: 1 }}>
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
+      
         
         {/* Header */}
         <View style={styles.header}>
@@ -291,8 +292,9 @@ export default function AddCustomerStep2() {
             />
         )}
 
-      </KeyboardAvoidingView>
+      
     </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -330,7 +332,7 @@ const styles = StyleSheet.create({
   uploadLabel: { fontSize: 13, fontWeight: '600', color: '#374151' },
   uploadSub: { fontSize: 11, color: '#9CA3AF', marginTop: 2 },
 
-  footer: { padding: 20, backgroundColor: '#fff', borderTopWidth: 1, borderColor: '#F3F4F6' },
+  footer: { padding: 20, backgroundColor: '#fff', borderTopWidth: 1, borderColor: '#F3F4F6', marginBottom: -25 },
   nextBtn: { backgroundColor: '#2563EB', height: 56, borderRadius: 14, justifyContent: 'center', alignItems: 'center', shadowColor: "#2563EB", shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
   nextBtnDisabled: { backgroundColor: '#9CA3AF', shadowOpacity: 0 },
   nextBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },

@@ -4,15 +4,15 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    KeyboardAvoidingView,
-    Platform,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { io } from "socket.io-client";
@@ -234,7 +234,12 @@ export default function SupportChatBox() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <KeyboardAvoidingView
+    style={{ flex: 1 }}
+    behavior={Platform.OS === "ios" ? "padding" : "height"}
+    keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+  >
+    <SafeAreaView style={styles.container} edges={['top']}>
       {/* HEADER */}
       <View style={styles.header}>
         <TouchableOpacity 
@@ -277,11 +282,8 @@ export default function SupportChatBox() {
         }
       />
 
-      {/* INPUT BAR */}
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
-      >
+     
+     
         <View style={styles.inputContainer}>
           <TextInput
             value={input}
@@ -307,8 +309,9 @@ export default function SupportChatBox() {
             </Text>
           </TouchableOpacity>
         </View>
-      </KeyboardAvoidingView>
+     
     </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -415,7 +418,7 @@ const styles = StyleSheet.create({
 
   messagesList: {
     padding: 16,
-    paddingBottom: 8,
+    paddingBottom: 5,
     flexGrow: 1,
   },
 

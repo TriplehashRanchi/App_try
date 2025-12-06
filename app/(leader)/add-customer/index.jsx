@@ -75,7 +75,7 @@ export default function AddCustomerStep1() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
-        
+
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
   inputContainer: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 12, paddingHorizontal: 12, height: 50, backgroundColor: '#F9FAFB' },
   inputIcon: { marginRight: 10 },
   input: { flex: 1, fontSize: 16, color: '#111' },
-  footer: { padding: 20, backgroundColor: '#fff', borderTopWidth: 1, borderColor: '#F3F4F6' },
+  footer: { padding: 20, backgroundColor: '#fff', borderTopWidth: 1, borderColor: '#F3F4F6', marginBottom: -5 },
   primaryBtn: { backgroundColor: '#2563EB', height: 56, borderRadius: 14, justifyContent: 'center', alignItems: 'center', shadowColor: "#2563EB", shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
   btnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
 });

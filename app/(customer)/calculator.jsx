@@ -1,11 +1,11 @@
   "use client";
 
   import Slider from "@react-native-community/slider";
-  import { useMemo, useState } from "react";
-  import { Dimensions, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-  import { GestureHandlerRootView } from 'react-native-gesture-handler';
-  import { SafeAreaView } from "react-native-safe-area-context";
-  import { LineChart } from 'react-native-wagmi-charts';
+import { useMemo, useState } from "react";
+import { Dimensions, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaView } from "react-native-safe-area-context";
+import { LineChart } from 'react-native-wagmi-charts';
 
   const { width } = Dimensions.get('window');
 
@@ -356,6 +356,7 @@
     container: {
       flex: 1,
       backgroundColor: "#FAFAFA",
+      marginBottom: -50,
     },
 
     header: {

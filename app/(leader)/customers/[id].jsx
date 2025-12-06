@@ -60,7 +60,7 @@ export default function CustomerDetailPage() {
   const doc = (type) => customer?.documents?.find((d) => d.type === type);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#f9fafb" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#f9fafb", marginBottom: -45 }}>
       <ScrollView style={{ flex: 1, padding: 16 }}>
         {/* BACK BUTTON */}
         <TouchableOpacity

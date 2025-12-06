@@ -13,20 +13,19 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { io } from "socket.io-client";
 
 dayjs.extend(relativeTime);
 
-// Replace with your actual backend URL
 const SOCKET_URL = "https://api.rmclub.co"; 
 
 export default function SupportChatScreen() {
   const { axiosAuth, user } = useAuth();
   const router = useRouter();
-  
+
   const [chat, setChat] = useState(null);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
@@ -36,18 +35,19 @@ export default function SupportChatScreen() {
   const socketRef = useRef(null);
   const flatListRef = useRef(null);
 
-  // --- 1. Initialize Chat & Fetch Messages ---
+  // --- Initialize Chat ---
   useEffect(() => {
     if (!user) return;
 
     const initChat = async () => {
       try {
         setLoading(true);
+
         // Get or Create Chat Room
         const { data } = await axiosAuth().get("/support/my-chat");
         setChat(data);
 
-        // Fetch History
+        // Fetch Messages
         const msgRes = await axiosAuth().get(`/support/${data.id}/messages`);
         setMessages(msgRes.data);
 
@@ -67,7 +67,7 @@ export default function SupportChatScreen() {
     };
   }, [user]);
 
-  // --- 2. Socket Connection Logic ---
+  // --- Socket Logic ---
   const connectSocket = (chatId) => {
     socketRef.current = io(SOCKET_URL, {
       transports: ["websocket"],
@@ -77,7 +77,7 @@ export default function SupportChatScreen() {
     const socket = socketRef.current;
 
     socket.on("connect", () => {
-      console.log("✅ Socket Connected:", socket.id);
+      console.log("SOCKET CONNECTED:", socket.id);
       socket.emit("joinChat", chatId);
     });
 
@@ -92,15 +92,15 @@ export default function SupportChatScreen() {
   const scrollToBottom = () => {
     setTimeout(() => {
       flatListRef.current?.scrollToEnd({ animated: true });
-    }, 100);
+    }, 80);
   };
 
-  // --- 3. Send Message ---
+  // --- Send Message ---
   const sendMessage = async () => {
     if (!input.trim() || !chat) return;
 
     const tempMsg = input;
-    setInput(""); // Clear UI immediately for speed
+    setInput("");
     setSending(true);
 
     try {
@@ -108,7 +108,6 @@ export default function SupportChatScreen() {
         chatId: chat.id,
         message: tempMsg,
       });
-      // Socket will receive the message back and update UI
     } catch (err) {
       console.error("Send Error:", err);
     } finally {
@@ -116,16 +115,11 @@ export default function SupportChatScreen() {
     }
   };
 
-  // --- Render Item for FlatList ---
+  // --- Render Message ---
   const renderMessage = ({ item }) => {
     const isMe = item.senderId === user.id;
     return (
-      <View
-        style={[
-          styles.msgBubble,
-          isMe ? styles.msgMe : styles.msgSupport,
-        ]}
-      >
+      <View style={[styles.msgBubble, isMe ? styles.msgMe : styles.msgSupport]}>
         <Text style={[styles.msgText, isMe ? styles.textMe : styles.textSupport]}>
           {item.message}
         </Text>
@@ -137,47 +131,42 @@ export default function SupportChatScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#F9FAFB" }}>
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color="#111" />
-        </TouchableOpacity>
-        <View>
-          <Text style={styles.headerTitle}>RM Support</Text>
-          <Text style={styles.headerStatus}>We usually reply in minutes</Text>
-        </View>
-      </View>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}  // PERFECT FOCUS
+    >
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#F9FAFB" }} edges={['top']}>
 
-      {/* Chat Area */}
-      {loading ? (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color="#2563EB" />
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <Ionicons name="arrow-back" size={24} color="#111" />
+          </TouchableOpacity>
+          <View>
+            <Text style={styles.headerTitle}>RM Support</Text>
+            <Text style={styles.headerStatus}>We usually reply in minutes</Text>
+          </View>
         </View>
-      ) : (
-        <FlatList
-          ref={flatListRef}
-          data={messages}
-          keyExtractor={(item, index) => item.id || index.toString()}
-          renderItem={renderMessage}
-          contentContainerStyle={styles.listContent}
-          onContentSizeChange={scrollToBottom}
-          ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>
-                👋 Hi {user?.username}! How can we help you today?
-              </Text>
-            </View>
-          }
-        />
-      )}
 
-      {/* Input Area */}
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 10 : 0}
-      >
+        {/* Chat Messages */}
+        {loading ? (
+          <View style={styles.loaderContainer}>
+            <ActivityIndicator size="large" color="#2563EB" />
+          </View>
+        ) : (
+          <FlatList
+            ref={flatListRef}
+            data={messages}
+            keyExtractor={(item, index) => item.id || index.toString()}
+            renderItem={renderMessage}
+            contentContainerStyle={styles.listContent}
+            onContentSizeChange={scrollToBottom}
+            keyboardShouldPersistTaps="handled"
+          />
+        )}
+
+        {/* Input Bar */}
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
@@ -187,6 +176,7 @@ export default function SupportChatScreen() {
             onChangeText={setInput}
             multiline
           />
+
           <TouchableOpacity
             onPress={sendMessage}
             disabled={!input.trim() || sending}
@@ -202,11 +192,13 @@ export default function SupportChatScreen() {
             )}
           </TouchableOpacity>
         </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 
+// --- Styles ---
 const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
@@ -221,7 +213,11 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 18, fontWeight: "700", color: "#111" },
   headerStatus: { fontSize: 12, color: "#10B981", fontWeight: "500" },
 
-  loaderContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
 
   listContent: { padding: 16, paddingBottom: 20 },
 
@@ -232,20 +228,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 18,
     marginBottom: 12,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
   },
-
-  // Customer Message (Right)
   msgMe: {
     alignSelf: "flex-end",
     backgroundColor: "#1E6DEB",
     borderBottomRightRadius: 4,
   },
-
-  // Support Message (Left)
   msgSupport: {
     alignSelf: "flex-start",
     backgroundColor: "#F3F4F6",
@@ -269,8 +257,9 @@ const styles = StyleSheet.create({
   timeMe: { color: "#fff" },
   timeSupport: { color: "#374151" },
 
+  // Empty Chat
   emptyState: { marginTop: 50, alignItems: "center" },
-  emptyText: { color: "#6B7280", fontSize: 14, lineHeight: 20 },
+  emptyText: { color: "#6B7280", fontSize: 14 },
 
   // --- Input Bar ---
   inputContainer: {
@@ -286,9 +275,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#F3F4F6",
     borderRadius: 28,
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 12,
     fontSize: 15,
-    maxHeight: 120,
+    maxHeight: 150,
     color: "#111",
   },
   sendBtn: {
@@ -299,12 +288,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginLeft: 10,
-    shadowColor: "#1E6DEB",
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
   },
   sendBtnDisabled: {
     backgroundColor: "#93C5FD",
-    shadowOpacity: 0,
   },
 });

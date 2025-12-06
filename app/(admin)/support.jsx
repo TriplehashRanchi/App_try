@@ -303,6 +303,11 @@ export default function SupportAdminPage() {
 
   // CHAT CONVERSATION VIEW
   return (
+     <KeyboardAvoidingView
+    style={{ flex: 1 }}
+    behavior={Platform.OS === "ios" ? "padding" : "height"}
+    keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+  >
     <SafeAreaView style={styles.container}>
       {/* HEADER */}
       <View style={styles.chatConversationHeader}>
@@ -349,10 +354,7 @@ export default function SupportAdminPage() {
       />
 
       {/* INPUT */}
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
-      >
+     
         <View style={styles.inputContainer}>
           <TextInput
             value={input}
@@ -380,7 +382,7 @@ export default function SupportAdminPage() {
             )}
           </TouchableOpacity>
         </View>
-      </KeyboardAvoidingView>
+      
 
       {/* USER INFO MODAL */}
       <Modal
@@ -437,6 +439,7 @@ export default function SupportAdminPage() {
         </View>
       </Modal>
     </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -444,6 +447,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FAFAFA",
+    marginBottom: -10,
   },
 
   loadingContainer: {

@@ -356,6 +356,7 @@ import { LineChart } from 'react-native-wagmi-charts';
     container: {
       flex: 1,
       backgroundColor: "#FAFAFA",
+      marginBottom: -50,
     },
 
     header: {

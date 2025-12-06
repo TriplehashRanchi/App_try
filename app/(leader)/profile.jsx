@@ -51,7 +51,8 @@ export default function LeaderProfilePage() {
     );
   }
 
-  const BASE = process.env.EXPO_PUBLIC_STATIC_URL;
+  const BASE = 'https://api.rmclub.co';
+
 
   const initials =
     (profile.firstName?.charAt(0) || "") + (profile.lastName?.charAt(0) || "");
@@ -60,6 +61,8 @@ export default function LeaderProfilePage() {
 
   const findDoc = (type) =>
     profile.documents?.find((doc) => doc.type === type) || {};
+
+  console.log("Leader Profile:", profile);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -188,7 +191,7 @@ export default function LeaderProfilePage() {
         </View>
 
         {/* View Investments */}
-        <View style={{ paddingHorizontal: 16, marginTop: 24 }}>
+        {/* <View style={{ paddingHorizontal: 16, marginTop: 24 }}>
           <TouchableOpacity
             onPress={() => router.push("/investments")}
             activeOpacity={0.85}
@@ -200,7 +203,7 @@ export default function LeaderProfilePage() {
             <Text style={styles.modernButtonText}>View Investments</Text>
             <Ionicons name="chevron-forward" size={20} color="#fff" />
           </TouchableOpacity>
-        </View>
+        </View> */}
 
         {/* Logout */}
         <TouchableOpacity
@@ -245,7 +248,11 @@ function Divider() {
 /* --------------------------------------------------------- */
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#FAFAFA" },
+  container: { 
+    flex: 1, 
+    backgroundColor: "#FAFAFA",
+    marginBottom: -40,
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
