@@ -60,12 +60,20 @@ export default function CustomerDetailPage() {
   const doc = (type) => customer?.documents?.find((d) => d.type === type);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#f9fafb", marginBottom: -45 }}>
-      <ScrollView style={{ flex: 1, padding: 16 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#f9fafb" }}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: 16, paddingBottom: 120 }}
+        keyboardShouldPersistTaps="handled"
+      >
         {/* BACK BUTTON */}
         <TouchableOpacity
           onPress={() => router.push("/customers")}
-          style={{ flexDirection: "row", alignItems: "center", marginBottom: 16 }}
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            marginBottom: 16,
+          }}
         >
           <Feather name="arrow-left" size={20} color="#374151" />
           <Text style={{ marginLeft: 6, fontWeight: "600", color: "#374151" }}>
@@ -236,7 +244,11 @@ export default function CustomerDetailPage() {
                   {fullUrl ? (
                     <Image
                       source={{ uri: fullUrl }}
-                      style={{ width: "100%", height: "100%", resizeMode: "cover" }}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        resizeMode: "cover",
+                      }}
                     />
                   ) : (
                     <View
@@ -302,9 +314,7 @@ export default function CustomerDetailPage() {
               marginBottom: 12,
             }}
           >
-            <Text style={{ fontSize: 20, fontWeight: "800" }}>
-              Investments
-            </Text>
+            <Text style={{ fontSize: 20, fontWeight: "800" }}>Investments</Text>
 
             <TouchableOpacity
               onPress={() => setShowInvestmentModal(true)}
@@ -318,9 +328,7 @@ export default function CustomerDetailPage() {
               }}
             >
               <Feather name="plus" size={16} color="#fff" />
-              <Text
-                style={{ color: "#fff", fontWeight: "600", marginLeft: 6 }}
-              >
+              <Text style={{ color: "#fff", fontWeight: "600", marginLeft: 6 }}>
                 Add
               </Text>
             </TouchableOpacity>
@@ -350,9 +358,7 @@ export default function CustomerDetailPage() {
                     : "FD+ (10% for 20M)"}
                 </Text>
 
-                <Text
-                  style={{ marginTop: 4, fontSize: 12, color: "#6b7280" }}
-                >
+                <Text style={{ marginTop: 4, fontSize: 12, color: "#6b7280" }}>
                   Status: {inv.status}
                 </Text>
               </View>

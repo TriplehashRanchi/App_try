@@ -194,7 +194,7 @@ export default function CreateInvestmentModal({
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.overlay}>
           <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
+             behavior={Platform.OS === "ios" ? "padding" : undefined}
             style={styles.keyboardView}
           >
             <View style={styles.container}>
@@ -418,9 +418,8 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   keyboardView: {
-    width: "100%",
-    height: "94%", 
-  },
+  flex: 1,
+},
   container: {
     flex: 1,
     backgroundColor: "#fff",

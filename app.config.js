@@ -26,13 +26,14 @@ export default {
     },
     android: {
       package: "com.rmclubranchi.app",
+      softwareKeyboardLayoutMode: "resize",
       adaptiveIcon: {
         backgroundColor: "#E6F4FE",
         foregroundImage: "./assets/images/icon.png",
         backgroundImage: "./assets/images/icon.png",
         monochromeImage: "./assets/images/icon.png"
       },
-      edgeToEdgeEnabled: true,
+      edgeToEdgeEnabled: false,
       predictiveBackGestureEnabled: false
     },
 
