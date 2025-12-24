@@ -1,3 +1,4 @@
+import LeaderEventsSection from "@/components/leader/LeaderEventsSection";
 import ShareModal from "@/components/leader/ShareModal";
 import { useAuth } from "@/context/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
@@ -17,6 +18,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import OffersCarousel from "../../components/customer/OfferCarousel";
 import OverviewStats from "../../components/leader/OverviewStats";
 import TargetTracker from "../../components/leader/TargetTracker";
+
 
 const { width } = Dimensions.get("window");
 
@@ -257,6 +259,9 @@ export default function LeaderDashboard() {
         )}
 
         <TargetTracker refreshTrigger={refreshing} />
+
+
+        <LeaderEventsSection />
 
         <OverviewStats
           totalCustomersReferred={totalCustomersReferred}
