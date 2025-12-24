@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
-import { StyleSheet, Text, View } from "react-native";
+import { router } from "expo-router";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function OverviewStats({
   totalCustomersReferred,
@@ -12,6 +13,7 @@ export default function OverviewStats({
       label: "Customers Referred",
       value: totalCustomersReferred,
       icon: <Feather name="users" size={18} color="#1E6DEB" />,
+      route: "/(leader)/customers",
     },
     {
       label: "Active Investors",
@@ -36,22 +38,28 @@ export default function OverviewStats({
         <Text style={styles.chipText}>Overview</Text>
       </View>
 
-      {stats.map((s, i) => (
-        <View
-          key={i}
-          style={[
-            styles.item,
-            i === stats.length - 1 && { borderBottomWidth: 0 },
-          ]}
-        >
-          <View style={styles.left}>
-            <View style={styles.icon}>{s.icon}</View>
-            <Text style={styles.label}>{s.label}</Text>
-          </View>
+      {stats.map((s, i) => {
+        const Wrapper = s.route ? TouchableOpacity : View;
 
-          <Text style={styles.value}>{s.value}</Text>
-        </View>
-      ))}
+        return (
+          <Wrapper
+            key={i}
+            activeOpacity={0.7}
+            onPress={() => s.route && router.push(s.route)}
+            style={[
+              styles.item,
+              i === stats.length - 1 && { borderBottomWidth: 0 },
+            ]}
+          >
+            <View style={styles.left}>
+              <View style={styles.icon}>{s.icon}</View>
+              <Text style={styles.label}>{s.label}</Text>
+            </View>
+
+            <Text style={styles.value}>{s.value}</Text>
+          </Wrapper>
+        );
+      })}
     </View>
   );
 }
