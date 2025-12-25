@@ -120,7 +120,7 @@ export default function AddCustomerStep2() {
     } catch (error) {
       // 3. Handle 400 cleanly so it doesn't crash or spam logs
       if (error.response && error.response.status === 400) {
-         console.log("KYC Input invalid yet, waiting for user to finish typing...");
+        //  console.log("KYC Input invalid yet, waiting for user to finish typing...");
       } else {
          console.log("KYC Check System Error", error);
       }

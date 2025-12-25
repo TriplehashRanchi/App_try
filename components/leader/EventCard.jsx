@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import dayjs from "dayjs";
 import { StyleSheet, Text, View } from "react-native";
 
-export default function EventCard({ event }) {
+export default function EventCard({ event, extraCount = 0 }) {
   const date = dayjs(event.date);
 
   return (
@@ -32,6 +32,13 @@ export default function EventCard({ event }) {
           <Text style={styles.metaText}>{event.venue}</Text>
         </View>
       </View>
+
+      {/* +N Badge */}
+      {extraCount > 0 && (
+        <View style={styles.multiBadge}>
+          <Text style={styles.multiText}>+{extraCount}</Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -40,16 +47,17 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
     backgroundColor: "#fff",
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 14,
     marginBottom: 12,
     borderWidth: 1,
     borderColor: "#E5E7EB",
+    position: "relative",
   },
   dateBlock: {
     width: 64,
     height: 64,
-    borderRadius: 12,
+    borderRadius: 14,
     backgroundColor: "#1E6DEB",
     justifyContent: "center",
     alignItems: "center",
@@ -95,5 +103,21 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#6B7280",
     fontWeight: "600",
+  },
+
+  /* +N Badge */
+  multiBadge: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    backgroundColor: "#1E6DEB",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  multiText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "700",
   },
 });

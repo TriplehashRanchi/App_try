@@ -240,11 +240,11 @@ export default function AddL2LeaderPage() {
     pan: "panUrl",
     passbook: "bankProofUrl", // ⭐ FIX HERE
   };
-  console.log("Upload Success:", type, url);
+  // console.log("Upload Success:", type, url);
 
   const correctKey = keyMap[type];
   if (!correctKey) return console.warn("Unknown upload type:", type);
-console.log("Correct Key:", correctKey);
+// console.log("Correct Key:", correctKey);
   setUploads((prev) => ({
     ...prev,
     [correctKey]: url,

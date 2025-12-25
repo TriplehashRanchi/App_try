@@ -84,7 +84,9 @@ export default function DashboardScreen() {
               return { data: [] };
             }),
         ]);
-        
+        console.log("Fetched dashboard data:", summaryRes.data);
+        console.log("Fetched targets data:", targetsRes.data);
+
         // Add analytics to each investment (required for UI)
         const enriched = summaryRes.data.map(inv => ({
           ...inv,

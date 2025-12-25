@@ -16,6 +16,9 @@ export const useAuth = () => useContext(AuthContext);
 // YOUR BACKEND URL
 const API_BASE_URL = "https://api.rmclub.co/api";
 
+export const STATIC_BASE_URL = "https://api.rmclub.co";
+
+
 const TOKEN_KEY = "rmclub_jwt";
 
 export const AuthProvider = ({ children }) => {

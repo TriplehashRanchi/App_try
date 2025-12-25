@@ -238,10 +238,10 @@ export default function LeaderDashboard() {
                 { backgroundColor: "#10B981", marginRight: 0 },
               ]}
               activeOpacity={0.85}
-              onPress={() => router.push("/(leader)/add-l2")}
+              onPress={() => router.push("/(leader)/customers")}
             >
               <Ionicons name="people-outline" size={18} color="#fff" />
-              <Text style={styles.quickBtnText}>Add L2</Text>
+              <Text style={styles.quickBtnText}>View Customers</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -369,7 +369,8 @@ export default function LeaderDashboard() {
             </View>
           )}
         </View>
-        <OffersCarousel />
+        <OffersCarousel offers={offers} />
+
       </ScrollView>
 
       <ShareModal

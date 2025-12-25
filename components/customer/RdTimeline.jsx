@@ -5,7 +5,7 @@ export default function RdTimeline({ investment }) {
   const generateTimeline = () => {
     const total = investment.rdPeriodMonths;
 
-    console.log(investment)
+    // console.log(investment)
     const paid = Number(investment.installmentsPaid || 0);
 
     const startDate = new Date(investment.activationDate);

@@ -1,92 +1,72 @@
+import { STATIC_BASE_URL } from "@/context/AuthContext";
 import { useEffect, useRef, useState } from "react";
-import { Dimensions, FlatList, Image, Text, View } from "react-native";
-import axiosAuth, { API_BASE_URL } from "../../utils/axiosAuth";
+import { Dimensions, FlatList, Image, View } from "react-native";
+import axiosAuth from "../../utils/axiosAuth";
 
 const { width } = Dimensions.get("window");
 
-
 export default function OffersCarousel() {
-    const [offers, setOffers] = useState([]);
-    const flatRef = useRef(null);
-    const [index, setIndex] = useState(0);
+  const [offers, setOffers] = useState([]);
+  const flatRef = useRef(null);
+  const [index, setIndex] = useState(0);
 
-    const BASE = API_BASE_URL.replace("/api", ""); // remove /api ONLY for images
+  const BASE = STATIC_BASE_URL;
 
-    useEffect(() => {
-        // console.log("📡 Fetching /offer-banners ...");
+  useEffect(() => {
+    axiosAuth
+      .get("/offer-banners")
+      .then((res) => setOffers(res.data || []))
+      .catch(() => setOffers([]));
+  }, []);
 
-        axiosAuth
-            .get("/offer-banners")
-            .then((res) => {
-                // console.log("✅ Response from /offer-banners:", res.data);
-                setOffers(res.data || []);
-            })
-            .catch((err) => {
-                console.log("❌ ERROR fetching /offer-banners:", err.message);
-                setOffers([]);
-            });
-    }, []);
+  // Auto scroll ONLY if more than 1 banner
+  useEffect(() => {
+    if (offers.length <= 1) return;
 
-    // Auto scroll debug
-    useEffect(() => {
-        // console.log("🔁 Offers array updated:", offers);
-        // console.log("➡️ Auto scroll enabled?", offers.length > 1);
+    const timer = setInterval(() => {
+      const next = (index + 1) % offers.length;
+      setIndex(next);
 
-        if (offers.length > 1) {
-            const timer = setInterval(() => {
-                let nextIndex = (index + 1) % offers.length;
-                // console.log("➡️ Scrolling to index:", nextIndex);
+      flatRef.current?.scrollToIndex({
+        index: next,
+        animated: true,
+      });
+    }, 3000);
 
-                setIndex(nextIndex);
+    return () => clearInterval(timer);
+  }, [index, offers]);
 
-                if (flatRef.current) {
-                    flatRef.current.scrollToIndex({ index: nextIndex, animated: true });
-                } else {
-                    console.log("⚠️ flatRef is NULL");
-                }
-            }, 3000);
+  if (!offers.length) return null;
 
-            return () => clearInterval(timer);
-        }
-    }, [index, offers]);
-
-    if (!offers.length) {
-        console.log("⚠️ No offers found");
-        return (
-            <View style={{ padding: 10 }}>
-                <Text style={{ textAlign: "center", color: "#6B7280" }}>
-                    No active offers
-                </Text>
-            </View>
-        );
-    }
-
-    return (
-        <View style={{ marginVertical: 5 }}>
-            <FlatList
-                ref={flatRef}
-                data={offers}
-                horizontal
-                pagingEnabled
-                scrollEnabled={false}
-                showsHorizontalScrollIndicator={false}
-                renderItem={({ item, index }) => {
-
-                    return (
-                        <Image
-                            source={{ uri: BASE + item.imageUrl }}
-                            style={{
-                                width: width - 40,
-                                height: 100,
-                                resizeMode: "contain",
-                               
-                            }}
-                        />
-
-                    );
-                }}
-                keyExtractor={(item, i) => i.toString()}
+  return (
+    <View style={{ marginVertical: 12 }}>
+      <FlatList
+        ref={flatRef}
+        data={offers}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        scrollEnabled={offers.length > 1} // ✅ KEY FIX
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View
+            style={{
+              width: width - 40,
+              marginHorizontal: 20,
+            }}
+          >
+            <Image
+              source={{ uri: `${BASE}${item.imageUrl}` }}
+              style={{
+                width: "100%",
+                height: 140,
+                borderRadius: 14,
+              }}
+              resizeMode="cover"
             />
-        </View>
-    );
+          </View>
+        )}
+      />
+    </View>
+  );
 }

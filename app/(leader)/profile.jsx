@@ -62,7 +62,7 @@ export default function LeaderProfilePage() {
   const findDoc = (type) =>
     profile.documents?.find((doc) => doc.type === type) || {};
 
-  console.log("Leader Profile:", profile);
+  // console.log("Leader Profile:", profile);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -171,7 +171,7 @@ export default function LeaderProfilePage() {
         </View>
 
         {/* COMMISSION HISTORY */}
-        <View style={styles.section}>
+        {/* <View style={styles.section}>
           <Text style={styles.sectionTitle}>Commission History</Text>
 
           {profile.commissions?.map((com) => (
@@ -188,7 +188,7 @@ export default function LeaderProfilePage() {
               />
             </View>
           ))}
-        </View>
+        </View> */}
 
         {/* View Investments */}
         {/* <View style={{ paddingHorizontal: 16, marginTop: 24 }}>

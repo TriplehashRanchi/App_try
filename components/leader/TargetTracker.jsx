@@ -89,7 +89,7 @@ export default function TargetTracker({ refreshTrigger }) {
     useEffect(() => {
         const fetchTargets = async () => {
             try {
-                console.log("🔵 Fetching targets...");
+                // console.log("🔵 Fetching targets...");
                 const res = await axiosAuth().get('/targets/user/my');
                 
                 let targetData = [];

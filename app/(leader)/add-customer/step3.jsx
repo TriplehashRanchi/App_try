@@ -47,7 +47,7 @@ export default function AddCustomerStep3() {
         // aadhar_front_url: params.aadharFrontUrl, etc.
       };
 
-      console.log("Finalizing Customer:", params.customerId);
+      // console.log("Finalizing Customer:", params.customerId);
 
       // 2. Call the Finalize API
       await axiosAuth().put(`/customers/${params.customerId}/finalize`, payload);

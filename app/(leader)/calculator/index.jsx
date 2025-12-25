@@ -341,9 +341,9 @@ import { LineChart } from 'react-native-wagmi-charts';
             </View>
 
             {/* CTA BUTTON */}
-            <TouchableOpacity style={styles.ctaButton}>
+            {/* <TouchableOpacity style={styles.ctaButton}>
               <Text style={styles.ctaButtonText}>Start Investing</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
 
             <View style={{ height: 40 }} />
           </ScrollView>

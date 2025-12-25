@@ -128,7 +128,7 @@ export default function CreateInvestmentModal({
         invEndpoint = "/investments/fd-plus";
       }
 
-      console.log("Creating Investment...");
+      // console.log("Creating Investment...");
       const res = await axiosAuth().post(invEndpoint, invPayload);
       
       const newInvestmentId = res.data.investmentId || res.data.id;
@@ -152,7 +152,7 @@ export default function CreateInvestmentModal({
             });
           }
 
-          console.log("Uploading Proof (Direct Request)...");
+          // console.log("Uploading Proof (Direct Request)...");
           
           // Get Token Manually
           const token = await AsyncStorage.getItem("rmclub_jwt");

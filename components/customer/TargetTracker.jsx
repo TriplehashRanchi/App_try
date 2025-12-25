@@ -91,7 +91,8 @@ export default function TargetTracker({ refreshTrigger }) {
             try {
                 // Fetch targets specifically for the logged-in user
                 const res = await axiosAuth().get('/targets/user/my');
-                
+                console.log("Fetched targets data:", res.data);
+
                 let targetData = [];
                 if (Array.isArray(res.data)) targetData = res.data;
                 else if (res.data?.data && Array.isArray(res.data.data)) targetData = res.data.data;

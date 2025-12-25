@@ -29,7 +29,6 @@ export default function InvestmentList({ investments }) {
             style={styles.item}
             onPress={() =>
              router.push(`/investments/${inv.id}`)
-
             }
           >
             <View>

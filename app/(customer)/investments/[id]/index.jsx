@@ -126,7 +126,6 @@ export default function InvestmentDetails() {
         investmentId: investment.id,
         requestedAmount: investment.principalAmount,
       });
-
       alert("Withdrawal request sent successfully.");
       fetchInvestment();
     } catch (err) {
