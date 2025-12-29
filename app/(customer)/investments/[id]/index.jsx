@@ -2,9 +2,16 @@
 
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
-import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Dimensions,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LineChart } from 'react-native-wagmi-charts';
+import { LineChart } from "react-native-wagmi-charts";
 import AddNewInvestmentDrawer from "../../../../components/customer/AddNewInvestmentDrawer";
 import RdTimeline from "../../../../components/customer/RdTimeline";
 import { useAuth } from "../../../../context/AuthContext";
@@ -12,7 +19,20 @@ import { useAuth } from "../../../../context/AuthContext";
 // Helper function to format dates without dayjs
 const formatDate = (dateString) => {
   const date = new Date(dateString);
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
   const day = date.getDate();
   const month = months[date.getMonth()];
   const year = date.getFullYear();
@@ -20,19 +40,26 @@ const formatDate = (dateString) => {
 };
 
 const getDaySuffix = (day) => {
-  if (day > 3 && day < 21) return 'th';
+  if (day > 3 && day < 21) return "th";
   switch (day % 10) {
-    case 1: return 'st';
-    case 2: return 'nd';
-    case 3: return 'rd';
-    default: return 'th';
+    case 1:
+      return "st";
+    case 2:
+      return "nd";
+    case 3:
+      return "rd";
+    default:
+      return "th";
   }
 };
 
 const getMonthsDiff = (startDate, endDate) => {
   const start = new Date(startDate);
   const end = new Date(endDate);
-  return (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+  return (
+    (end.getFullYear() - start.getFullYear()) * 12 +
+    (end.getMonth() - start.getMonth())
+  );
 };
 
 const addMonths = (dateString, months) => {
@@ -43,16 +70,17 @@ const addMonths = (dateString, months) => {
 
 // Helper to calculate next payout date
 const calculateNextPayout = (investment) => {
-  const paidPayouts = investment.payoutHistory?.filter(p => p.status === "paid") || [];
-  
+  const paidPayouts =
+    investment.payoutHistory?.filter((p) => p.status === "paid") || [];
+
   if (paidPayouts.length > 0) {
     // Sort by date descending and get the most recent
-    const lastPaid = paidPayouts.sort((a, b) => 
-      new Date(b.payoutDate) - new Date(a.payoutDate)
+    const lastPaid = paidPayouts.sort(
+      (a, b) => new Date(b.payoutDate) - new Date(a.payoutDate)
     )[0];
     return formatDate(addMonths(lastPaid.payoutDate, 1));
   }
-  
+
   // First payout is 1 month after activation
   return formatDate(addMonths(investment.activationDate, 1));
 };
@@ -77,16 +105,16 @@ const calculateProjections = (investment, tenure) => {
     // FD+: 5% principal return + 5% interest monthly
     const monthlyPrincipalReturn = p * 0.05;
     const monthlyInterest = p * 0.05;
-    
+
     for (let month = 0; month <= Math.min(tenure, 20); month++) {
       const principalReturned = monthlyPrincipalReturn * month;
       const interestEarned = monthlyInterest * month;
       const totalReturns = principalReturned + interestEarned;
-      
+
       // Remaining principal + all returns received
       const remainingPrincipal = Math.max(0, p - principalReturned);
       const value = remainingPrincipal + totalReturns;
-      
+
       data.push({
         timestamp: month,
         value: value,
@@ -97,7 +125,7 @@ const calculateProjections = (investment, tenure) => {
     const monthlyDeposit = p;
     for (let month = 0; month <= tenure; month++) {
       const totalDeposit = monthlyDeposit * month;
-      const interest = monthlyDeposit * rate * (month * (month + 1) / 2);
+      const interest = monthlyDeposit * rate * ((month * (month + 1)) / 2);
       data.push({
         timestamp: month,
         value: totalDeposit + interest,
@@ -119,7 +147,6 @@ export default function InvestmentDetails() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [withdrawalRequested, setWithdrawalRequested] = useState(false);
 
-
   const handleWithdrawalRequest = async () => {
     try {
       await auth().post("/withdrawal-requests", {
@@ -135,25 +162,29 @@ export default function InvestmentDetails() {
   };
 
   const checkExistingWithdrawal = async () => {
-  try {
-    const res = await auth().get(`/withdrawal-requests/by-investment/${id}`);
+    try {
+      const res = await auth().get(`/withdrawal-requests/by-investment/${id}`);
 
-    // find request with pending or approved
-    const req = res.data.find(
-      r => r.status === "pending" || r.status === "approved"
-    );
+      // find request with pending or approved
+      const req = res.data.find(
+        (r) => r.status === "pending" || r.status === "approved"
+      );
 
-    setWithdrawalRequested(!!req);
-  } catch (err) {
-    console.log("Failed to check existing withdrawal:", err);
-  }
-};
+      setWithdrawalRequested(!!req);
+    } catch (err) {
+      console.log("Failed to check existing withdrawal:", err);
+    }
+  };
   useEffect(() => {
     if (investment) {
       const defaultTenure =
-        investment.type === 'fd' ? 12 :
-          investment.type === 'fd_plus' ? 20 :
-            investment.type === 'rd' ? investment.rdPeriodMonths || 12 : 12;
+        investment.type === "fd"
+          ? 12
+          : investment.type === "fd_plus"
+          ? 20
+          : investment.type === "rd"
+          ? investment.rdPeriodMonths || 12
+          : 12;
       setSelectedTenure(defaultTenure);
     }
   }, [investment]);
@@ -163,23 +194,21 @@ export default function InvestmentDetails() {
     fetchInvestment();
   }, [id]);
 
-const fetchInvestment = async () => {
-  setLoading(true);
-  try {
-    const res = await auth().get(`/investments/${id}`);
-    setInvestment(res.data);
+  const fetchInvestment = async () => {
+    setLoading(true);
+    try {
+      const res = await auth().get(`/investments/${id}`);
+      setInvestment(res.data);
 
-    // 🔥 CHECK WITHDRAWAL STATUS HERE
-    checkExistingWithdrawal();
-
-  } catch (err) {
-    console.log("❌ Fetch error:", err);
-    router.push("/customer/dashboard");
-  } finally {
-    setLoading(false);
-  }
-};
-
+      // 🔥 CHECK WITHDRAWAL STATUS HERE
+      checkExistingWithdrawal();
+    } catch (err) {
+      console.log("❌ Fetch error:", err);
+      router.push("/customer/dashboard");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const monthsPassed = investment
     ? getMonthsDiff(investment.activationDate, new Date().toISOString())
@@ -192,25 +221,30 @@ const fetchInvestment = async () => {
 
     if (investment.type === "fd") {
       const monthly = p * investment.interestRate;
-      
+
       // Only count PAID payouts for total received
-      const paidPayouts = investment.payoutHistory?.filter(h => h.status === "paid") || [];
+      const paidPayouts =
+        investment.payoutHistory?.filter((h) => h.status === "paid") || [];
       const totalPayouts = paidPayouts.length;
-      
+
       // Total interest earned so far (based on months passed)
       const interestEarned = monthly * monthsPassed;
-      
+
       // Current value = principal + interest earned
       const currentValue = p + interestEarned;
-      
+
       return {
         monthlyPayout: monthly,
         totalReceived: monthly * totalPayouts, // Only paid amounts
         totalInterestEarned: interestEarned, // Total interest accumulated
         currentValue: currentValue,
         principalAmount: p,
-        status: monthsPassed >= investment.lockInPeriodMonths ? "Unlocked" : "Locked",
-        lockRemaining: Math.max(0, investment.lockInPeriodMonths - monthsPassed),
+        status:
+          monthsPassed >= investment.lockInPeriodMonths ? "Unlocked" : "Locked",
+        lockRemaining: Math.max(
+          0,
+          investment.lockInPeriodMonths - monthsPassed
+        ),
         nextPayout: calculateNextPayout(investment),
       };
     }
@@ -219,15 +253,16 @@ const fetchInvestment = async () => {
       const monthlyPrincipalReturn = p * 0.05;
       const monthlyInterest = p * 0.05;
       const monthlyTotal = monthlyPrincipalReturn + monthlyInterest;
-      
+
       // Only count PAID payouts
-      const paidPayouts = investment.payoutHistory?.filter(h => h.status === "paid") || [];
+      const paidPayouts =
+        investment.payoutHistory?.filter((h) => h.status === "paid") || [];
       const monthsCompleted = paidPayouts.length;
-      
+
       const principalReturned = monthlyPrincipalReturn * monthsCompleted;
       const interestEarned = monthlyInterest * monthsCompleted;
       const totalReceived = principalReturned + interestEarned;
-      
+
       // Current value = remaining principal + all returns
       const remainingPrincipal = Math.max(0, p - principalReturned);
       const currentValue = remainingPrincipal + totalReceived;
@@ -249,20 +284,26 @@ const fetchInvestment = async () => {
       const installment = investment.principalAmount;
 
       const monthsPaid = investment.installments
-        ? investment.installments.filter(i => i.status === "paid").length
+        ? investment.installments.filter((i) => i.status === "paid").length
         : 0;
 
       const totalMonths = investment.rdPeriodMonths;
       const totalDeposited = installment * monthsPaid;
-      
+
       // Interest calculation
-      const interest = installment * Number(investment.interestRate) * (monthsPaid * (monthsPaid + 1) / 2);
-      
+      const interest =
+        installment *
+        Number(investment.interestRate) *
+        ((monthsPaid * (monthsPaid + 1)) / 2);
+
       const currentValue = totalDeposited + interest;
-      
+
       // Projected maturity value (full tenure)
       const totalDepositedAtMaturity = installment * totalMonths;
-      const interestAtMaturity = installment * Number(investment.interestRate) * (totalMonths * (totalMonths + 1) / 2);
+      const interestAtMaturity =
+        installment *
+        Number(investment.interestRate) *
+        ((totalMonths * (totalMonths + 1)) / 2);
       const maturityValue = totalDepositedAtMaturity + interestAtMaturity;
 
       return {
@@ -272,7 +313,9 @@ const fetchInvestment = async () => {
         interest,
         currentValue: currentValue,
         maturityValue: maturityValue,
-        maturityDate: formatDate(addMonths(investment.activationDate, totalMonths)),
+        maturityDate: formatDate(
+          addMonths(investment.activationDate, totalMonths)
+        ),
       };
     }
 
@@ -282,30 +325,30 @@ const fetchInvestment = async () => {
   const tenureOptions = useMemo(() => {
     if (!investment) return [];
 
-    if (investment.type === 'fd') {
+    if (investment.type === "fd") {
       return [
-        { label: '3M', months: 3 },
-        { label: '6M', months: 6 },
-        { label: '1Y', months: 12 },
-        { label: '3Y', months: 36 },
-        { label: '5Y', months: 60 },
-        { label: '10Y', months: 120 },
-        { label: '20Y', months: 240 },
+        { label: "3M", months: 3 },
+        { label: "6M", months: 6 },
+        { label: "1Y", months: 12 },
+        { label: "3Y", months: 36 },
+        { label: "5Y", months: 60 },
+        { label: "10Y", months: 120 },
+        { label: "20Y", months: 240 },
       ];
-    } else if (investment.type === 'fd_plus') {
+    } else if (investment.type === "fd_plus") {
       return [
-        { label: '5M', months: 5 },
-        { label: '10M', months: 10 },
-        { label: '15M', months: 15 },
-        { label: '20M', months: 20 },
+        { label: "5M", months: 5 },
+        { label: "10M", months: 10 },
+        { label: "15M", months: 15 },
+        { label: "20M", months: 20 },
       ];
-    } else if (investment.type === 'rd') {
+    } else if (investment.type === "rd") {
       const total = investment.rdPeriodMonths;
       return [
-        { label: '25%', months: Math.floor(total * 0.25) },
-        { label: '50%', months: Math.floor(total * 0.5) },
-        { label: '75%', months: Math.floor(total * 0.75) },
-        { label: 'Full', months: total },
+        { label: "25%", months: Math.floor(total * 0.25) },
+        { label: "50%", months: Math.floor(total * 0.5) },
+        { label: "75%", months: Math.floor(total * 0.75) },
+        { label: "Full", months: total },
       ];
     }
     return [];
@@ -330,13 +373,13 @@ const fetchInvestment = async () => {
     investment.type === "fd"
       ? "Fixed Deposit"
       : investment.type === "fd_plus"
-        ? "FD Plus"
-        : "Recurring Deposit";
+      ? "FD Plus"
+      : "Recurring Deposit";
 
   // Calculate current value and gain correctly
   const currentValue = calc.currentValue || investment.principalAmount;
   const principalAmount = investment.principalAmount;
-  
+
   // Total gain calculation
   let totalGain = 0;
   if (investment.type === "fd") {
@@ -349,18 +392,21 @@ const fetchInvestment = async () => {
     // Gain = current value - total deposited
     totalGain = currentValue - calc.totalDeposited || 0;
   }
-  
-  const gainPercentage = principalAmount > 0 
-    ? ((totalGain / principalAmount) * 100).toFixed(2) 
-    : "0.00";
+
+  const gainPercentage =
+    principalAmount > 0
+      ? ((totalGain / principalAmount) * 100).toFixed(2)
+      : "0.00";
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
-
         {/* HEADER */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backButton}
+          >
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Investment Details</Text>
@@ -373,14 +419,20 @@ const fetchInvestment = async () => {
         <View style={styles.titleSection}>
           <View style={styles.logoCircle} />
           <View style={styles.titleTextContainer}>
-            <Text style={styles.investmentName} numberOfLines={2}>{typeName}</Text>
+            <Text style={styles.investmentName} numberOfLines={2}>
+              {typeName}
+            </Text>
             <View style={styles.badgeRow}>
               <Text style={styles.tagText}>
                 {investment.type === "rd" ? "Recurring" : "Growth"}
               </Text>
               <Text style={styles.tagSeparator}>|</Text>
               <Text style={styles.tagText}>
-                {investment.type === "fd" ? "Fixed Deposit" : investment.type === "fd_plus" ? "FD Plus" : "RD"}
+                {investment.type === "fd"
+                  ? "Fixed Deposit"
+                  : investment.type === "fd_plus"
+                  ? "FD Plus"
+                  : "RD"}
               </Text>
             </View>
           </View>
@@ -392,9 +444,17 @@ const fetchInvestment = async () => {
             Invested on {formatDate(investment.startDate)}
           </Text>
           <View style={styles.navRow}>
-            <Text style={styles.navValue}>₹{currentValue.toLocaleString('en-IN')}</Text>
-            <Text style={[styles.navChange, totalGain >= 0 && styles.navChangePositive]}>
-              {totalGain >= 0 ? '+' : ''}{gainPercentage}%
+            <Text style={styles.navValue}>
+              ₹{currentValue.toLocaleString("en-IN")}
+            </Text>
+            <Text
+              style={[
+                styles.navChange,
+                totalGain >= 0 && styles.navChangePositive,
+              ]}
+            >
+              {totalGain >= 0 ? "+" : ""}
+              {gainPercentage}%
             </Text>
           </View>
         </View>
@@ -411,30 +471,33 @@ const fetchInvestment = async () => {
           <View style={styles.metricItem}>
             <Text style={styles.metricLabel}>Status</Text>
             <Text style={styles.metricValue}>
-              {investment.status === 'active' ? 'Active' : 'Completed'}
+              {investment.status === "active" ? "Active" : "Completed"}
             </Text>
           </View>
 
           <View style={styles.metricItem}>
             <Text style={styles.metricLabel}>
-              {investment.type === 'fd' ? 'Lock-in period' :
-                investment.type === 'rd' ? 'Period' : 'Duration'}
+              {investment.type === "fd"
+                ? "Lock-in period"
+                : investment.type === "rd"
+                ? "Period"
+                : "Duration"}
             </Text>
             <Text style={styles.metricValue}>
-              {investment.type === 'fd'
+              {investment.type === "fd"
                 ? investment.lockInPeriodMonths
                   ? `${investment.lockInPeriodMonths} months`
-                  : 'NA'
-                : investment.type === 'rd'
-                  ? `${investment.rdPeriodMonths} months`
-                  : '20 months'}
+                  : "NA"
+                : investment.type === "rd"
+                ? `${investment.rdPeriodMonths} months`
+                : "20 months"}
             </Text>
           </View>
 
           <View style={styles.metricItem}>
             <Text style={styles.metricLabel}>Total Gain</Text>
             <Text style={[styles.metricValue, styles.metricValueGreen]}>
-              ₹{totalGain.toLocaleString('en-IN')}
+              ₹{totalGain.toLocaleString("en-IN")}
             </Text>
           </View>
         </View>
@@ -444,7 +507,10 @@ const fetchInvestment = async () => {
           <View style={styles.chartContainer}>
             <View style={styles.chartWrapper}>
               <LineChart.Provider data={chartData}>
-                <LineChart height={220} width={Dimensions.get('window').width - 32}>
+                <LineChart
+                  height={220}
+                  width={Dimensions.get("window").width - 32}
+                >
                   <LineChart.Path color="#387AFF" width={2.5} />
                   <LineChart.CursorCrosshair color="#387AFF">
                     <LineChart.Tooltip />
@@ -457,9 +523,13 @@ const fetchInvestment = async () => {
             <View style={styles.projectionInfo}>
               <Text style={styles.projectionLabel}>Projected Value</Text>
               <Text style={styles.projectionValue}>
-                ₹{chartData[chartData.length - 1]?.value.toLocaleString('en-IN', {
-                  maximumFractionDigits: 0
-                })}
+                ₹
+                {chartData[chartData.length - 1]?.value.toLocaleString(
+                  "en-IN",
+                  {
+                    maximumFractionDigits: 0,
+                  }
+                )}
               </Text>
               <Text style={styles.projectionSubtext}>
                 at {selectedTenure} months
@@ -480,13 +550,18 @@ const fetchInvestment = async () => {
           {tenureOptions.map((option) => (
             <TouchableOpacity
               key={option.label}
-              style={[styles.tab, selectedTenure === option.months && styles.tabActive]}
+              style={[
+                styles.tab,
+                selectedTenure === option.months && styles.tabActive,
+              ]}
               onPress={() => setSelectedTenure(option.months)}
             >
-              <Text style={[
-                styles.tabText,
-                selectedTenure === option.months && styles.tabTextActive
-              ]}>
+              <Text
+                style={[
+                  styles.tabText,
+                  selectedTenure === option.months && styles.tabTextActive,
+                ]}
+              >
                 {option.label}
               </Text>
             </TouchableOpacity>
@@ -499,48 +574,56 @@ const fetchInvestment = async () => {
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Principal Amount</Text>
               <Text style={styles.detailValue}>
-                ₹{investment.principalAmount.toLocaleString('en-IN')}
+                ₹{investment.principalAmount.toLocaleString("en-IN")}
               </Text>
             </View>
 
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Current Value</Text>
               <Text style={[styles.detailValue, styles.metricValueGreen]}>
-                ₹{calc.currentValue?.toLocaleString('en-IN') || '0'}
+                ₹{calc.currentValue?.toLocaleString("en-IN") || "0"}
               </Text>
             </View>
 
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Interest Earned</Text>
               <Text style={[styles.detailValue, styles.metricValueGreen]}>
-                ₹{calc.totalInterestEarned?.toLocaleString('en-IN') || '0'}
+                ₹{calc.totalInterestEarned?.toLocaleString("en-IN") || "0"}
               </Text>
             </View>
 
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Monthly Payout</Text>
               <Text style={styles.detailValue}>
-                ₹{calc.monthlyPayout?.toLocaleString('en-IN') || '0'}
+                ₹{calc.monthlyPayout?.toLocaleString("en-IN") || "0"}
               </Text>
             </View>
 
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Total Payouts Received</Text>
               <Text style={styles.detailValue}>
-                ₹{calc.totalReceived?.toLocaleString('en-IN') || '0'}
+                ₹{calc.totalReceived?.toLocaleString("en-IN") || "0"}
               </Text>
             </View>
 
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Next Payout</Text>
-              <Text style={styles.detailValue}>{calc.nextPayout || 'N/A'}</Text>
+              <Text style={styles.detailValue}>{calc.nextPayout || "N/A"}</Text>
             </View>
 
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Lock-in Status</Text>
-              <Text style={[styles.detailValue, calc.status === "Unlocked" ? styles.statusUnlocked : styles.statusLocked]}>
+              <Text
+                style={[
+                  styles.detailValue,
+                  calc.status === "Unlocked"
+                    ? styles.statusUnlocked
+                    : styles.statusLocked,
+                ]}
+              >
                 {calc.status}
-                {calc.lockRemaining > 0 && ` (${calc.lockRemaining} months remaining)`}
+                {calc.lockRemaining > 0 &&
+                  ` (${calc.lockRemaining} months remaining)`}
               </Text>
             </View>
           </View>
@@ -551,28 +634,28 @@ const fetchInvestment = async () => {
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Principal Amount</Text>
               <Text style={styles.detailValue}>
-                ₹{investment.principalAmount.toLocaleString('en-IN')}
+                ₹{investment.principalAmount.toLocaleString("en-IN")}
               </Text>
             </View>
 
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Current Value</Text>
               <Text style={[styles.detailValue, styles.metricValueGreen]}>
-                ₹{calc.currentValue?.toLocaleString('en-IN') || '0'}
+                ₹{calc.currentValue?.toLocaleString("en-IN") || "0"}
               </Text>
             </View>
 
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Remaining Principal</Text>
               <Text style={styles.detailValue}>
-                ₹{calc.remainingPrincipal?.toLocaleString('en-IN') || '0'}
+                ₹{calc.remainingPrincipal?.toLocaleString("en-IN") || "0"}
               </Text>
             </View>
 
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Monthly Return (5%+5%)</Text>
               <Text style={styles.detailValue}>
-                ₹{calc.monthlyPayout?.toLocaleString('en-IN') || '0'}
+                ₹{calc.monthlyPayout?.toLocaleString("en-IN") || "0"}
               </Text>
             </View>
 
@@ -586,27 +669,29 @@ const fetchInvestment = async () => {
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Principal Returned</Text>
               <Text style={styles.detailValue}>
-                ₹{calc.principalReturned?.toLocaleString('en-IN') || '0'}
+                ₹{calc.principalReturned?.toLocaleString("en-IN") || "0"}
               </Text>
             </View>
 
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Interest Earned</Text>
               <Text style={[styles.detailValue, styles.metricValueGreen]}>
-                ₹{calc.interestEarned?.toLocaleString('en-IN') || '0'}
+                ₹{calc.interestEarned?.toLocaleString("en-IN") || "0"}
               </Text>
             </View>
 
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Total Received</Text>
               <Text style={styles.detailValue}>
-                ₹{calc.totalReceived?.toLocaleString('en-IN') || '0'}
+                ₹{calc.totalReceived?.toLocaleString("en-IN") || "0"}
               </Text>
             </View>
 
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Remaining Months</Text>
-              <Text style={styles.detailValue}>{calc.remainingMonths || 0}</Text>
+              <Text style={styles.detailValue}>
+                {calc.remainingMonths || 0}
+              </Text>
             </View>
           </View>
         )}
@@ -614,11 +699,11 @@ const fetchInvestment = async () => {
         {investment.type === "rd" && (
           <View style={styles.detailsSection}>
             <RdTimeline investment={investment} />
-            
+
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Monthly Installment</Text>
               <Text style={styles.detailValue}>
-                ₹{calc.monthlyInstallment?.toLocaleString('en-IN') || '0'}
+                ₹{calc.monthlyInstallment?.toLocaleString("en-IN") || "0"}
               </Text>
             </View>
 
@@ -632,57 +717,60 @@ const fetchInvestment = async () => {
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Total Deposited</Text>
               <Text style={styles.detailValue}>
-                ₹{calc.totalDeposited?.toLocaleString('en-IN') || '0'}
+                ₹{calc.totalDeposited?.toLocaleString("en-IN") || "0"}
               </Text>
             </View>
 
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Current Value</Text>
               <Text style={[styles.detailValue, styles.metricValueGreen]}>
-                ₹{calc.currentValue?.toLocaleString('en-IN') || '0'}
+                ₹{calc.currentValue?.toLocaleString("en-IN") || "0"}
               </Text>
             </View>
 
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Interest Earned</Text>
               <Text style={[styles.detailValue, styles.statusUnlocked]}>
-                ₹{calc.interest?.toLocaleString('en-IN') || '0'}
+                ₹{calc.interest?.toLocaleString("en-IN") || "0"}
               </Text>
             </View>
 
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Maturity Value</Text>
               <Text style={[styles.detailValue, styles.maturityValue]}>
-                ₹{calc.maturityValue?.toLocaleString('en-IN') || '0'}
+                ₹{calc.maturityValue?.toLocaleString("en-IN") || "0"}
               </Text>
             </View>
 
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Maturity Date</Text>
-              <Text style={styles.detailValue}>{calc.maturityDate || 'N/A'}</Text>
+              <Text style={styles.detailValue}>
+                {calc.maturityDate || "N/A"}
+              </Text>
             </View>
           </View>
         )}
 
         <View style={styles.actionButtons}>
           {/* WITHDRAW BUTTON — Only for FD + unlocked */}
-          {investment.type === "fd" && calc.status === "Unlocked" && (
-  withdrawalRequested ? (
-    <View style={[styles.primaryButton, { backgroundColor: "#d1d5db" }]}>
-      <Text style={[styles.primaryButtonText, { color: "#555" }]}>
-         Requested
-      </Text>
-    </View>
-  ) : (
-    <TouchableOpacity
-      style={styles.primaryButton}
-      onPress={handleWithdrawalRequest}
-    >
-      <Text style={styles.primaryButtonText}>Withdraw</Text>
-    </TouchableOpacity>
-  )
-)}
-
+          {investment.type === "fd" &&
+            calc.status === "Unlocked" &&
+            (withdrawalRequested ? (
+              <View
+                style={[styles.primaryButton, { backgroundColor: "#d1d5db" }]}
+              >
+                <Text style={[styles.primaryButtonText, { color: "#555" }]}>
+                  Requested
+                </Text>
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={styles.primaryButton}
+                onPress={handleWithdrawalRequest}
+              >
+                <Text style={styles.primaryButtonText}>Withdraw</Text>
+              </TouchableOpacity>
+            ))}
 
           {/* ADD NEW — always visible */}
           <TouchableOpacity
@@ -696,7 +784,8 @@ const fetchInvestment = async () => {
         <View style={{ height: 60 }} />
         <AddNewInvestmentDrawer
           visible={drawerOpen}
-          onClose={() => setDrawerOpen(false)} />
+          onClose={() => setDrawerOpen(false)}
+        />
       </ScrollView>
     </SafeAreaView>
   );
@@ -771,8 +860,8 @@ const styles = StyleSheet.create({
   },
 
   titleSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: "#F6F7F9",
     gap: 20,
     paddingHorizontal: 16,
@@ -788,7 +877,7 @@ const styles = StyleSheet.create({
 
   badgeRow: {
     flexDirection: "row",
-    alignItems: 'center',
+    alignItems: "center",
   },
 
   titleTextContainer: {
@@ -798,13 +887,13 @@ const styles = StyleSheet.create({
 
   tagSeparator: {
     fontSize: 10,
-    color: '#D0D0D0',
+    color: "#D0D0D0",
     marginHorizontal: 6,
   },
 
   tagText: {
     fontSize: 12,
-    color: '#9E9E9E',
+    color: "#9E9E9E",
   },
 
   chartWrapper: {
@@ -815,25 +904,25 @@ const styles = StyleSheet.create({
   projectionInfo: {
     paddingHorizontal: 16,
     paddingTop: 16,
-    alignItems: 'center',
+    alignItems: "center",
   },
 
   projectionLabel: {
     fontSize: 12,
-    color: '#999',
+    color: "#999",
     marginBottom: 4,
   },
 
   projectionValue: {
     fontSize: 24,
-    fontWeight: '600',
-    color: '#222',
+    fontWeight: "600",
+    color: "#222",
     marginBottom: 2,
   },
 
   projectionSubtext: {
     fontSize: 12,
-    color: '#666',
+    color: "#666",
   },
 
   navSection: {
@@ -885,7 +974,6 @@ const styles = StyleSheet.create({
     marginBottom: 24, // Changed from 20
     paddingRight: 16, // Add padding between columns
   },
-
 
   metricLabel: {
     fontSize: 13,

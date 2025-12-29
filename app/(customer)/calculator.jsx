@@ -14,6 +14,7 @@ import {
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LineChart } from "react-native-wagmi-charts";
+import AddNewInvestmentDrawer from "../../components/customer/AddNewInvestmentDrawer";
 
 const { width } = Dimensions.get("window");
 
@@ -21,6 +22,8 @@ export default function InvestmentCalculator() {
   const [mode, setMode] = useState("fd"); // fd | rd | fdplus
   const [amount, setAmount] = useState("10000");
   const [months, setMonths] = useState(12);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [prefillData, setPrefillData] = useState(null);
 
   const FD_RATE = 0.05; // 5% monthly payout
   const RD_RATE = 0.24; // 24% yearly → 2% monthly
@@ -64,6 +67,17 @@ export default function InvestmentCalculator() {
 
     return data;
   }, [mode, amount, months]);
+
+  const handleStartInvesting = () => {
+    setPrefillData({
+      type: mode === "fd" ? "fd" : mode === "rd" ? "rd" : "fd_plus",
+
+      amount: Number(amount),
+      months,
+    });
+
+    setDrawerOpen(true);
+  };
 
   // Calculate results
   const calculate = () => {
@@ -373,11 +387,19 @@ export default function InvestmentCalculator() {
           </View>
 
           {/* CTA BUTTON */}
-          {/* <TouchableOpacity style={styles.ctaButton}>
+          <TouchableOpacity
+            style={styles.ctaButton}
+            onPress={handleStartInvesting}
+          >
             <Text style={styles.ctaButtonText}>Start Investing</Text>
-          </TouchableOpacity> */}
+          </TouchableOpacity>
 
           <View style={{ height: 40 }} />
+          <AddNewInvestmentDrawer
+            visible={drawerOpen}
+            onClose={() => setDrawerOpen(false)}
+            prefillData={prefillData}
+          />
         </ScrollView>
       </SafeAreaView>
     </GestureHandlerRootView>

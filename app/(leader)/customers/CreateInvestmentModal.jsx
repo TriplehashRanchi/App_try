@@ -5,7 +5,6 @@ import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -14,8 +13,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  TouchableWithoutFeedback,
-  View,
+  View
 } from "react-native";
 
 // Imports needed to bypass the interceptor for file upload
@@ -28,7 +26,7 @@ export default function CreateInvestmentModal({
   customerId,
   onCreated,
 }) {
-  const { axiosAuth } = useAuth(); // Keep this for the Create Investment step (JSON)
+  const { axiosAuth } = useAuth();
   const [loading, setLoading] = useState(false);
 
   // --- Form State ---
@@ -111,7 +109,7 @@ export default function CreateInvestmentModal({
     try {
       setLoading(true);
 
-      // STEP 1: Create Investment (JSON) - Use axiosAuth (Interceptor is fine here)
+      // STEP 1: Create Investment (JSON)
       let invPayload = { customerId, principalAmount, startDate };
       let invEndpoint = "";
 
@@ -128,13 +126,10 @@ export default function CreateInvestmentModal({
         invEndpoint = "/investments/fd-plus";
       }
 
-      // console.log("Creating Investment...");
       const res = await axiosAuth().post(invEndpoint, invPayload);
-      
       const newInvestmentId = res.data.investmentId || res.data.id;
 
-      // STEP 2: Upload Proof (FormData) - BYPASS INTERCEPTOR
-      // We use standard 'axios' here to prevent the Content-Type override issue.
+      // STEP 2: Upload Proof (FormData)
       if (newInvestmentId) {
         try {
           const formData = new FormData();
@@ -151,19 +146,15 @@ export default function CreateInvestmentModal({
               type: proofFile.mimeType || "image/jpeg",
             });
           }
-
-          // console.log("Uploading Proof (Direct Request)...");
           
-          // Get Token Manually
           const token = await AsyncStorage.getItem("rmclub_jwt");
 
-          // Direct Axios call to avoid global interceptor forcing JSON
           await axios.post("https://api.rmclub.co/api/payment-proofs", formData, {
             headers: { 
                 "Authorization": `Bearer ${token}`,
-                "Content-Type": "multipart/form-data", // Standard Axios handles the boundary automatically
+                "Content-Type": "multipart/form-data",
             },
-            transformRequest: (data) => data, // Essential for React Native FormData
+            transformRequest: (data) => data,
           });
 
         } catch (paymentErr) {
@@ -190,274 +181,377 @@ export default function CreateInvestmentModal({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={styles.overlay}>
-          <KeyboardAvoidingView
-             behavior={Platform.OS === "ios" ? "padding" : undefined}
-            style={styles.keyboardView}
-          >
-            <View style={styles.container}>
-              {/* --- Header --- */}
-              <View style={styles.header}>
+    <Modal 
+      visible={visible} 
+      transparent 
+      animationType="slide" 
+      onRequestClose={handleClose}
+    >
+      <View style={styles.overlay}>
+        {/* Invisible tap area to close modal if tapped outside */}
+        <TouchableOpacity style={styles.backdrop} onPress={handleClose} activeOpacity={1} />
+
+        <KeyboardAvoidingView
+           behavior={Platform.OS === "ios" ? "padding" : "height"}
+           style={styles.keyboardView}
+        >
+          <View style={styles.container}>
+            {/* --- Header --- */}
+            <View style={styles.header}>
+              <View>
                 <Text style={styles.headerTitle}>New Investment</Text>
-                <TouchableOpacity onPress={handleClose} style={styles.closeBtn}>
-                  <Feather name="x" size={22} color="#475569" />
-                </TouchableOpacity>
+                <Text style={styles.headerSubtitle}>Create a plan for customer</Text>
+              </View>
+              <TouchableOpacity onPress={handleClose} style={styles.closeBtn}>
+                <Feather name="x" size={20} color="#64748b" />
+              </TouchableOpacity>
+            </View>
+
+            {/* --- Scrollable Form --- */}
+            <ScrollView 
+              showsVerticalScrollIndicator={false} 
+              contentContainerStyle={styles.scrollContent}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+            >
+              {/* 1. Plan Type Selector */}
+              <View style={styles.segmentContainer}>
+                {["fd", "rd", "fd_plus"].map((t) => (
+                  <TouchableOpacity
+                    key={t}
+                    onPress={() => setType(t)}
+                    style={[
+                      styles.segmentBtn,
+                      type === t && styles.segmentBtnActive,
+                    ]}
+                  >
+                    <Text style={[styles.segmentText, type === t && styles.segmentTextActive]}>
+                      {t === "fd_plus" ? "FD Plus" : t.toUpperCase()}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
               </View>
 
-              <ScrollView 
-                showsVerticalScrollIndicator={false} 
-                contentContainerStyle={styles.scrollContent}
-              >
-                {/* --- 1. Investment Type --- */}
-                <Text style={styles.label}>Select Plan Type</Text>
-                <View style={styles.typeContainer}>
-                  {["fd", "rd", "fd_plus"].map((t) => (
-                    <TouchableOpacity
-                      key={t}
-                      onPress={() => setType(t)}
-                      style={[
-                        styles.typeBtn,
-                        type === t && styles.typeBtnActive,
-                      ]}
-                    >
-                      <Text style={[styles.typeText, type === t && styles.typeTextActive]}>
-                        {t === "fd_plus" ? "FD+" : t.toUpperCase()}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-
-                {/* --- 2. Basic Details --- */}
-                <Text style={styles.label}>
-                  {type === "rd" ? "Monthly Installment (₹)*" : "Principal Amount (₹)*"}
+              {/* 2. Amount Input (Hero) */}
+              <View style={styles.heroInputContainer}>
+                <Text style={styles.heroLabel}>
+                  {type === "rd" ? "Monthly Installment" : "Principal Amount"}
                 </Text>
-                <TextInput
-                  style={styles.inputBig}
-                  value={principalAmount}
-                  onChangeText={setPrincipalAmount}
-                  keyboardType="numeric"
-                  placeholder="0"
-                  placeholderTextColor="#cbd5e1"
-                />
+                <View style={styles.amountWrapper}>
+                  <Text style={styles.currencySymbol}>₹</Text>
+                  <TextInput
+                    style={styles.heroInput}
+                    value={principalAmount}
+                    onChangeText={setPrincipalAmount}
+                    keyboardType="numeric"
+                    placeholder="0"
+                    placeholderTextColor="#cbd5e1"
+                  />
+                </View>
+              </View>
 
-                <View style={styles.row}>
-                  <View style={{ flex: 1, marginRight: 10 }}>
-                    <Text style={styles.label}>Start Date</Text>
+              {/* 3. Date & Rate Row */}
+              <View style={styles.row}>
+                <View style={styles.halfInput}>
+                  <Text style={styles.label}>Start Date</Text>
+                  <View style={styles.inputIconWrapper}>
                     <TextInput
-                      style={styles.input}
+                      style={styles.inputWithIcon}
                       value={startDate}
                       onChangeText={setStartDate}
                       placeholder="YYYY-MM-DD"
                     />
+                    <Feather name="calendar" size={16} color="#94a3b8" style={styles.inputIconRight} />
                   </View>
-                  
-                  {type !== "fd_plus" && (
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.label}>Interest Rate (%)</Text>
-                      <TextInput
-                        style={styles.input}
-                        value={interestRate}
-                        onChangeText={setInterestRate}
-                        keyboardType="numeric"
-                        placeholder="e.g. 12"
-                      />
-                    </View>
-                  )}
                 </View>
-
-                {/* --- 3. Plan Specifics --- */}
-                {type === "fd" && (
-                  <View style={styles.detailsBox}>
-                    <Text style={styles.boxTitle}>FD Configuration</Text>
-                    <View style={styles.row}>
-                      <View style={{ flex: 1, marginRight: 10 }}>
-                        <Text style={styles.subLabel}>Lock-in (Months)</Text>
-                        <TextInput
-                          style={styles.inputWhite}
-                          value={lockIn}
-                          onChangeText={setLockIn}
-                          keyboardType="numeric"
-                          placeholder="12"
-                        />
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.subLabel}>Payout</Text>
-                        <View style={styles.staticInput}>
-                            <Text style={{fontWeight:'600', color:'#2563eb'}}>Monthly</Text>
-                        </View>
-                      </View>
-                    </View>
-                  </View>
-                )}
-
-                {type === "rd" && (
-                  <View style={[styles.detailsBox, { backgroundColor: "#ecfdf5", borderColor: "#a7f3d0" }]}>
-                    <Text style={[styles.boxTitle, { color: "#047857" }]}>RD Configuration</Text>
-                    <Text style={styles.subLabel}>Total Duration (Months)</Text>
+                
+                {type !== "fd_plus" && (
+                  <View style={styles.halfInput}>
+                    <Text style={styles.label}>Interest Rate (%)</Text>
                     <TextInput
-                      style={styles.inputWhite}
-                      value={rdMonths}
-                      onChangeText={setRdMonths}
+                      style={styles.input}
+                      value={interestRate}
+                      onChangeText={setInterestRate}
                       keyboardType="numeric"
-                      placeholder="e.g. 12"
+                      placeholder="12.0"
                     />
                   </View>
                 )}
+              </View>
 
-                {type === "fd_plus" && (
-                  <View style={styles.fdPlusBox}>
-                    <View style={styles.fdPlusHeader}>
-                        <Feather name="star" size={16} color="#b45309" />
-                        <Text style={styles.fdPlusTitle}>FD+ FIXED PLAN</Text>
+              {/* 4. Plan Specifics (Conditional) */}
+              {type === "fd" && (
+                <View style={styles.cardBox}>
+                  <Text style={styles.cardTitle}>FD Configuration</Text>
+                  <View style={styles.row}>
+                    <View style={styles.halfInput}>
+                      <Text style={styles.subLabel}>Lock-in (Months)</Text>
+                      <TextInput
+                        style={styles.inputWhite}
+                        value={lockIn}
+                        onChangeText={setLockIn}
+                        keyboardType="numeric"
+                        placeholder="12"
+                      />
                     </View>
-                    <Text style={styles.fdPlusText}>
-                      • 10% Guaranteed Return{"\n"}
-                      • 20 Months Lock-in{"\n"}
-                      • Auto-Monthly Payouts
-                    </Text>
+                    <View style={styles.halfInput}>
+                      <Text style={styles.subLabel}>Payout</Text>
+                      <View style={styles.staticInput}>
+                          <Text style={styles.staticInputText}>Monthly</Text>
+                      </View>
+                    </View>
                   </View>
-                )}
+                </View>
+              )}
 
-                <View style={styles.divider} />
+              {type === "rd" && (
+                <View style={[styles.cardBox, styles.rdBox]}>
+                  <Text style={[styles.cardTitle, { color: "#047857" }]}>RD Configuration</Text>
+                  <Text style={styles.subLabel}>Total Duration (Months)</Text>
+                  <TextInput
+                    style={styles.inputWhite}
+                    value={rdMonths}
+                    onChangeText={setRdMonths}
+                    keyboardType="numeric"
+                    placeholder="e.g. 12"
+                  />
+                </View>
+              )}
 
-                {/* --- 4. PAYMENT DETAILS --- */}
-                <Text style={styles.sectionHeader}>Payment & Proof</Text>
+              {type === "fd_plus" && (
+                <View style={styles.fdPlusBox}>
+                  <View style={styles.fdPlusHeader}>
+                      <View style={styles.starIcon}>
+                         <Feather name="star" size={14} color="#fff" />
+                      </View>
+                      <Text style={styles.fdPlusTitle}>FD+ FIXED PLAN</Text>
+                  </View>
+                  <View style={styles.bulletPoint}>
+                    <Feather name="check-circle" size={16} color="#b45309" />
+                    <Text style={styles.fdPlusText}>10% Guaranteed Return</Text>
+                  </View>
+                  <View style={styles.bulletPoint}>
+                    <Feather name="check-circle" size={16} color="#b45309" />
+                    <Text style={styles.fdPlusText}>20 Months Lock-in</Text>
+                  </View>
+                </View>
+              )}
 
-                <Text style={styles.label}>Payment Method</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{marginBottom: 16}}>
-                    {['bank_transfer', 'upi', 'cash', 'cheque'].map((method) => (
-                        <TouchableOpacity
-                            key={method}
-                            onPress={() => setPaymentMethod(method)}
-                            style={[
-                                styles.pillBtn,
-                                paymentMethod === method && styles.pillBtnActive
-                            ]}
-                        >
-                            <Text style={[styles.pillText, paymentMethod === method && styles.pillTextActive]}>
-                                {method.replace('_', ' ').toUpperCase()}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
-                </ScrollView>
+              <View style={styles.divider} />
 
-                <Text style={styles.label}>Transaction ID / UTR / Cheque No.</Text>
-                <TextInput
-                  style={styles.input}
-                  value={transactionId}
-                  onChangeText={setTransactionId}
-                  placeholder="Optional for Cash"
-                />
+              {/* 5. Payment & Proof */}
+              <Text style={styles.sectionHeader}>Payment Details</Text>
 
-                <Text style={[styles.label, { marginTop: 12 }]}>
-                    Proof Document {paymentMethod !== 'cash' && '*'}
-                </Text>
-                
-                <TouchableOpacity onPress={pickDocument} style={styles.uploadBox}>
-                  {proofFile ? (
-                    <View style={styles.filePreview}>
-                        <View style={styles.fileIcon}>
-                            <Feather name="file-text" size={24} color="#2563eb" />
-                        </View>
-                        <View style={{flex:1}}>
-                            <Text style={styles.fileName} numberOfLines={1}>
-                                {proofFile.name}
-                            </Text>
-                            <Text style={styles.fileSize}>
-                                {(proofFile.size / 1024).toFixed(2)} KB
-                            </Text>
-                        </View>
-                        <TouchableOpacity onPress={(e) => { e.stopPropagation(); setProofFile(null); }}>
-                            <Feather name="trash-2" size={20} color="#ef4444" />
-                        </TouchableOpacity>
-                    </View>
-                  ) : (
-                    <View style={styles.uploadPlaceholder}>
-                        <View style={styles.uploadIconCircle}>
-                            <Feather name="upload-cloud" size={24} color="#64748b" />
-                        </View>
-                        <Text style={styles.uploadText}>Tap to upload Receipt</Text>
-                        <Text style={styles.uploadSubText}>Images or PDF accepted</Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-
-                <View style={{ height: 40 }} />
+              <Text style={styles.label}>Payment Method</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.methodScroll}>
+                  {['bank_transfer', 'upi', 'cash', 'cheque'].map((method) => (
+                      <TouchableOpacity
+                          key={method}
+                          onPress={() => setPaymentMethod(method)}
+                          style={[
+                              styles.pillBtn,
+                              paymentMethod === method && styles.pillBtnActive
+                          ]}
+                      >
+                          {paymentMethod === method && <Feather name="check" size={14} color="#2563eb" style={{marginRight:4}} />}
+                          <Text style={[styles.pillText, paymentMethod === method && styles.pillTextActive]}>
+                              {method.replace('_', ' ').toUpperCase()}
+                          </Text>
+                      </TouchableOpacity>
+                  ))}
               </ScrollView>
 
-              <View style={styles.footer}>
-                <TouchableOpacity
-                  disabled={loading}
-                  onPress={handleCreateAndLog}
-                  style={[styles.createBtn, loading && styles.btnDisabled]}
-                >
-                  {loading ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <Text style={styles.createBtnText}>
-                       Create & Log Payment
-                    </Text>
-                  )}
-                </TouchableOpacity>
-              </View>
+              <Text style={styles.label}>Transaction Ref / UTR</Text>
+              <TextInput
+                style={styles.input}
+                value={transactionId}
+                onChangeText={setTransactionId}
+                placeholder="Required for online payments"
+              />
+
+              <Text style={[styles.label, { marginTop: 16 }]}>
+                  Upload Proof {paymentMethod !== 'cash' && '*'}
+              </Text>
+              
+              <TouchableOpacity onPress={pickDocument} activeOpacity={0.8}>
+                {proofFile ? (
+                  <View style={styles.filePreview}>
+                      <View style={styles.fileIcon}>
+                          <Feather name="file-text" size={24} color="#2563eb" />
+                      </View>
+                      <View style={{flex:1}}>
+                          <Text style={styles.fileName} numberOfLines={1}>
+                              {proofFile.name}
+                          </Text>
+                          <Text style={styles.fileSize}>
+                              File selected
+                          </Text>
+                      </View>
+                      <TouchableOpacity 
+                        style={styles.trashBtn}
+                        onPress={(e) => { e.stopPropagation(); setProofFile(null); }}
+                      >
+                          <Feather name="trash-2" size={18} color="#ef4444" />
+                      </TouchableOpacity>
+                  </View>
+                ) : (
+                  <View style={styles.uploadBox}>
+                      <Feather name="upload-cloud" size={28} color="#94a3b8" />
+                      <Text style={styles.uploadText}>Tap to upload Receipt</Text>
+                      <Text style={styles.uploadSubText}>Support: JPG, PNG, PDF</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            </ScrollView>
+
+            {/* --- Footer --- */}
+            <View style={styles.footer}>
+              <TouchableOpacity
+                disabled={loading}
+                onPress={handleCreateAndLog}
+                style={[styles.createBtn, loading && styles.btnDisabled]}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.createBtnText}>
+                     Create Investment
+                  </Text>
+                )}
+              </TouchableOpacity>
             </View>
-          </KeyboardAvoidingView>
-        </View>
-      </TouchableWithoutFeedback>
+          </View>
+        </KeyboardAvoidingView>
+      </View>
     </Modal>
   );
 }
 
-// --- Styles (Same as before) ---
+// --- Premium Styles ---
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.6)",
+    backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "flex-end",
   },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
   keyboardView: {
-  flex: 1,
-},
+    width: '100%',
+    height: '92%', // Takes up 92% of screen height
+  },
   container: {
     flex: 1,
-    backgroundColor: "#fff",
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    backgroundColor: "#f8fafc",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 10,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 15,
+    paddingTop: 24,
+    paddingBottom: 16,
+    backgroundColor: "#fff",
     borderBottomWidth: 1,
     borderBottomColor: "#f1f5f9",
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: "700",
+    fontWeight: "800",
     color: "#0f172a",
-    letterSpacing: -0.5,
+  },
+  headerSubtitle: {
+    fontSize: 13,
+    color: "#64748b",
+    marginTop: 2,
   },
   closeBtn: {
-    padding: 8,
+    width: 36,
+    height: 36,
     backgroundColor: "#f1f5f9",
-    borderRadius: 50,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scrollContent: {
     padding: 20,
     paddingBottom: 40,
   },
-  sectionHeader: {
-    fontSize: 16,
+  
+  // Segment Control
+  segmentContainer: {
+    flexDirection: "row",
+    backgroundColor: "#e2e8f0",
+    padding: 4,
+    borderRadius: 12,
+    marginBottom: 24,
+  },
+  segmentBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: "center",
+    borderRadius: 10,
+  },
+  segmentBtnActive: {
+    backgroundColor: "#fff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  segmentText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#64748b",
+  },
+  segmentTextActive: {
+    color: "#0f172a",
+    fontWeight: "700",
+  },
+
+  // Hero Input
+  heroInputContainer: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  heroLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#64748b",
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 8,
+  },
+  amountWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  currencySymbol: {
+    fontSize: 32,
+    fontWeight: "600",
+    color: "#0f172a",
+    marginRight: 4,
+  },
+  heroInput: {
+    fontSize: 36,
     fontWeight: "800",
     color: "#0f172a",
-    marginBottom: 12,
+    minWidth: 100,
+    textAlign: 'center',
+    padding: 0,
   },
+
+  // General Inputs
   label: {
     fontSize: 14,
     fontWeight: "600",
@@ -473,27 +567,59 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     marginBottom: 16,
+    gap: 12,
+  },
+  halfInput: {
+    flex: 1,
   },
   input: {
-    backgroundColor: "#f8fafc",
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-    borderRadius: 12,
-    padding: 12,
-    fontSize: 15,
-    color: "#0f172a",
-    marginBottom: 10,
-  },
-  inputBig: {
     backgroundColor: "#fff",
     borderWidth: 1,
     borderColor: "#e2e8f0",
-    borderRadius: 16,
-    padding: 16,
-    fontSize: 24,
-    fontWeight: "700",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 15,
     color: "#0f172a",
+  },
+  inputIconWrapper: {
+    position: 'relative',
+    justifyContent: 'center',
+  },
+  inputWithIcon: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    borderRadius: 12,
+    paddingLeft: 16,
+    paddingRight: 40,
+    paddingVertical: 12,
+    fontSize: 15,
+    color: "#0f172a",
+  },
+  inputIconRight: {
+    position: 'absolute',
+    right: 12,
+  },
+
+  // Card Styles (FD/RD)
+  cardBox: {
+    backgroundColor: "#eff6ff",
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#dbeafe",
     marginBottom: 20,
+  },
+  rdBox: {
+    backgroundColor: "#ecfdf5",
+    borderColor: "#a7f3d0",
+  },
+  cardTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#1e40af",
+    marginBottom: 12,
   },
   inputWhite: {
     backgroundColor: "#fff",
@@ -503,54 +629,87 @@ const styles = StyleSheet.create({
     padding: 10,
     fontSize: 15,
     color: "#0f172a",
+    textAlign: 'center',
   },
   staticInput: {
-    backgroundColor: "#eff6ff",
+    backgroundColor: "rgba(255,255,255,0.5)",
     borderWidth: 1,
-    borderColor: "#dbeafe",
+    borderColor: "#bfdbfe",
     borderRadius: 10,
-    padding: 12,
+    padding: 10,
     alignItems:'center',
     justifyContent:'center'
   },
-  typeContainer: {
-    flexDirection: "row",
-    backgroundColor: "#f1f5f9",
+  staticInputText: {
+    fontWeight:'700', 
+    color:'#2563eb',
+    fontSize: 14
+  },
+
+  // FD Plus Special
+  fdPlusBox: {
+    backgroundColor: "#fffbeb",
+    borderWidth: 1,
+    borderColor: "#fcd34d",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+  },
+  fdPlusHeader: {
+    flexDirection:'row',
+    alignItems:'center',
+    gap: 8,
+    marginBottom: 12
+  },
+  starIcon: {
+    backgroundColor: "#d97706",
     padding: 4,
-    borderRadius: 14,
-    marginBottom: 24,
+    borderRadius: 50,
   },
-  typeBtn: {
-    flex: 1,
-    paddingVertical: 10,
-    alignItems: "center",
-    borderRadius: 12,
+  fdPlusTitle: {
+    color: "#92400e",
+    fontWeight: "800",
+    fontSize: 14,
+    letterSpacing: 0.5,
   },
-  typeBtnActive: {
-    backgroundColor: "#fff",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+  bulletPoint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+    gap: 8,
   },
-  typeText: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#64748b",
+  fdPlusText: {
+    color: "#92400e",
+    fontSize: 14,
+    fontWeight: '500'
   },
-  typeTextActive: {
-    color: "#2563eb",
-    fontWeight: "700",
+
+  divider: {
+    height: 1,
+    backgroundColor: "#e2e8f0",
+    marginVertical: 10,
+  },
+  sectionHeader: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#0f172a",
+    marginBottom: 16,
+  },
+
+  // Payment Pills
+  methodScroll: {
+    marginBottom: 16,
   },
   pillBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: "#f1f5f9",
+    paddingVertical: 10,
+    borderRadius: 24,
+    backgroundColor: "#fff",
     marginRight: 8,
     borderWidth: 1,
-    borderColor: "transparent",
+    borderColor: "#e2e8f0",
   },
   pillBtnActive: {
     backgroundColor: "#eff6ff",
@@ -564,76 +723,24 @@ const styles = StyleSheet.create({
   pillTextActive: {
     color: "#2563eb",
   },
-  detailsBox: {
-    backgroundColor: "#eff6ff",
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#dbeafe",
-    marginBottom: 16,
-  },
-  boxTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#1e40af",
-    marginBottom: 12,
-  },
-  fdPlusBox: {
-    backgroundColor: "#fffbeb",
-    borderWidth: 1,
-    borderColor: "#fcd34d",
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-  },
-  fdPlusHeader: {
-    flexDirection:'row',
-    alignItems:'center',
-    gap: 6,
-    marginBottom: 8
-  },
-  fdPlusTitle: {
-    color: "#b45309",
-    fontWeight: "800",
-    fontSize: 14,
-  },
-  fdPlusText: {
-    color: "#92400e",
-    fontSize: 13,
-    lineHeight: 22,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#e2e8f0",
-    marginVertical: 20,
-  },
+
+  // Upload Box
   uploadBox: {
     borderWidth: 2,
-    borderColor: "#e2e8f0",
+    borderColor: "#cbd5e1",
     borderStyle: "dashed",
     borderRadius: 16,
-    backgroundColor: "#f8fafc",
-    padding: 20,
+    backgroundColor: "#f1f5f9",
+    padding: 24,
     alignItems: "center",
     justifyContent: "center",
-    minHeight: 120,
-  },
-  uploadPlaceholder: {
-    alignItems: "center",
-  },
-  uploadIconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#e2e8f0",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 10,
+    marginTop: 8,
   },
   uploadText: {
     fontSize: 14,
     fontWeight: "600",
     color: "#475569",
+    marginTop: 12,
   },
   uploadSubText: {
     fontSize: 12,
@@ -643,19 +750,24 @@ const styles = StyleSheet.create({
   filePreview: {
     flexDirection: "row",
     alignItems: "center",
-    width: "100%",
     backgroundColor: "#fff",
     padding: 12,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "#e2e8f0",
     gap: 12,
+    marginTop: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   fileIcon: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     backgroundColor: "#eff6ff",
-    borderRadius: 8,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -668,22 +780,35 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#64748b",
   },
+  trashBtn: {
+    padding: 8,
+    backgroundColor: '#fef2f2',
+    borderRadius: 8,
+  },
+
+  // Footer
   footer: {
     padding: 20,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 20, // Safe area for iOS
     backgroundColor: "#fff",
     borderTopWidth: 1,
     borderTopColor: "#f1f5f9",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 5,
   },
   createBtn: {
     backgroundColor: "#2563eb",
-    paddingVertical: 16,
+    paddingVertical: 18,
     borderRadius: 16,
     alignItems: "center",
     shadowColor: "#2563eb",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 6,
+    shadowRadius: 8,
+    elevation: 4,
   },
   btnDisabled: {
     backgroundColor: "#94a3b8",
