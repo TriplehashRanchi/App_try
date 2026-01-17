@@ -43,7 +43,7 @@ export default function CreateInvestmentModal({
   // --- Payment State ---
   const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
   const [transactionId, setTransactionId] = useState("");
-  const [proofFile, setProofFile] = useState(null);
+  const [proofFiles, setProofFiles] = useState([]);
 
   // --- Helpers ---
   const resetForm = () => {
@@ -55,7 +55,7 @@ export default function CreateInvestmentModal({
     setStartDate(new Date().toISOString().split("T")[0]);
     setPaymentMethod("bank_transfer");
     setTransactionId("");
-    setProofFile(null);
+    setProofFiles([]);
   };
 
   const handleClose = () => {
@@ -68,14 +68,19 @@ export default function CreateInvestmentModal({
       const result = await DocumentPicker.getDocumentAsync({
         type: ["image/*", "application/pdf"],
         copyToCacheDirectory: true,
+        multiple: true,
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        setProofFile(result.assets[0]);
+        setProofFiles((prev) => [...prev, ...result.assets]);
       }
     } catch (err) {
       console.log("Picker Error:", err);
     }
+  };
+
+  const handleRemoveFile = (indexToRemove) => {
+    setProofFiles((prev) => prev.filter((_, index) => index !== indexToRemove));
   };
 
   const validate = () => {
@@ -95,7 +100,7 @@ export default function CreateInvestmentModal({
       Alert.alert("Missing Input", "RD requires Interest Rate and Months.");
       return false;
     }
-    if (paymentMethod !== "cash" && !proofFile) {
+    if (paymentMethod !== "cash" && proofFiles.length === 0) {
       Alert.alert("Proof Required", "Please upload a proof document.");
       return false;
     }
@@ -139,13 +144,13 @@ export default function CreateInvestmentModal({
           if (transactionId) formData.append("transactionId", transactionId);
           formData.append("notes", "Created via App"); 
 
-          if (proofFile) {
-            formData.append("file", {
-              uri: Platform.OS === 'android' ? proofFile.uri : proofFile.uri.replace('file://', ''),
-              name: proofFile.name || `proof.jpg`,
-              type: proofFile.mimeType || "image/jpeg",
+          proofFiles.forEach((file, index) => {
+            formData.append("files", {
+              uri: Platform.OS === 'android' ? file.uri : file.uri.replace('file://', ''),
+              name: file.name || `proof-${index + 1}.jpg`,
+              type: file.mimeType || "image/jpeg",
             });
-          }
+          });
           
           const token = await AsyncStorage.getItem("rmclub_jwt");
 
@@ -374,34 +379,41 @@ export default function CreateInvestmentModal({
               </Text>
               
               <TouchableOpacity onPress={pickDocument} activeOpacity={0.8}>
-                {proofFile ? (
-                  <View style={styles.filePreview}>
+                <View style={styles.uploadBox}>
+                    <Feather name="upload-cloud" size={28} color="#94a3b8" />
+                    <Text style={styles.uploadText}>Tap to upload receipt</Text>
+                    <Text style={styles.uploadSubText}>Support: JPG, PNG, PDF</Text>
+                    {proofFiles.length > 0 && (
+                      <Text style={styles.uploadCount}>{proofFiles.length} file(s) selected</Text>
+                    )}
+                </View>
+              </TouchableOpacity>
+
+              {proofFiles.length > 0 && (
+                <View style={styles.fileList}>
+                  {proofFiles.map((file, index) => (
+                    <View key={`${file.uri}-${index}`} style={styles.filePreview}>
                       <View style={styles.fileIcon}>
-                          <Feather name="file-text" size={24} color="#2563eb" />
+                        <Feather name="file-text" size={24} color="#2563eb" />
                       </View>
                       <View style={{flex:1}}>
-                          <Text style={styles.fileName} numberOfLines={1}>
-                              {proofFile.name}
-                          </Text>
-                          <Text style={styles.fileSize}>
-                              File selected
-                          </Text>
+                        <Text style={styles.fileName} numberOfLines={1}>
+                          {file.name || `Proof ${index + 1}`}
+                        </Text>
+                        <Text style={styles.fileSize}>
+                          {file.size ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : "File selected"}
+                        </Text>
                       </View>
                       <TouchableOpacity 
                         style={styles.trashBtn}
-                        onPress={(e) => { e.stopPropagation(); setProofFile(null); }}
+                        onPress={() => handleRemoveFile(index)}
                       >
-                          <Feather name="trash-2" size={18} color="#ef4444" />
+                        <Feather name="trash-2" size={18} color="#ef4444" />
                       </TouchableOpacity>
-                  </View>
-                ) : (
-                  <View style={styles.uploadBox}>
-                      <Feather name="upload-cloud" size={28} color="#94a3b8" />
-                      <Text style={styles.uploadText}>Tap to upload Receipt</Text>
-                      <Text style={styles.uploadSubText}>Support: JPG, PNG, PDF</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+              )}
             </ScrollView>
 
             {/* --- Footer --- */}
@@ -746,6 +758,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#94a3b8",
     marginTop: 4,
+  },
+  uploadCount: {
+    fontSize: 12,
+    color: "#64748b",
+    marginTop: 8,
+    fontWeight: "600",
+  },
+  fileList: {
+    marginTop: 8,
+    gap: 8,
   },
   filePreview: {
     flexDirection: "row",
