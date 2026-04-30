@@ -1,7 +1,8 @@
 import { useAuth } from "@/context/AuthContext";
 import { Feather } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 import { router, useLocalSearchParams } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -16,7 +17,6 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import CreateInvestmentModal from "./CreateInvestmentModal";
 
 export default function CustomerDetailPage() {
   const { id } = useLocalSearchParams();
@@ -25,7 +25,6 @@ export default function CustomerDetailPage() {
   const [customer, setCustomer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [showInvestmentModal, setShowInvestmentModal] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -63,9 +62,11 @@ export default function CustomerDetailPage() {
     }
   }, [axiosAuth, id, syncEditForm]);
 
-  useEffect(() => {
-    fetchCustomer();
-  }, [fetchCustomer]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchCustomer();
+    }, [fetchCustomer])
+  );
 
   const updateField = (key, value) => {
     setEditForm((prev) => ({ ...prev, [key]: value }));
@@ -525,7 +526,12 @@ export default function CustomerDetailPage() {
               <Text style={{ fontSize: 20, fontWeight: "800" }}>Investments</Text>
 
               <TouchableOpacity
-                onPress={() => setShowInvestmentModal(true)}
+                onPress={() =>
+                  router.push({
+                    pathname: "/customers/add-investment",
+                    params: { customerId: id },
+                  })
+                }
                 style={{
                   flexDirection: "row",
                   alignItems: "center",
@@ -573,15 +579,6 @@ export default function CustomerDetailPage() {
               ))
             ) : (
               <Text style={{ color: "#6b7280" }}>No investments yet.</Text>
-            )}
-
-            {showInvestmentModal && (
-              <CreateInvestmentModal
-                visible={showInvestmentModal}
-                customerId={id}
-                onClose={() => setShowInvestmentModal(false)}
-                onCreated={() => fetchCustomer()}
-              />
             )}
           </View>
         </ScrollView>

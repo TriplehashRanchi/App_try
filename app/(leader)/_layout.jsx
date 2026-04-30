@@ -100,6 +100,10 @@ export default function LeaderLayout() {
       <Tabs.Screen name="commissions/index" options={{ href: null }} />
       <Tabs.Screen name="customers/index" options={{ href: null }} />
       <Tabs.Screen name="customers/[id]" options={{ href: null }} />
+      <Tabs.Screen
+        name="customers/add-investment"
+        options={{ href: null, tabBarStyle: { display: "none" } }}
+      />
       <Tabs.Screen name="investments/index" options={{ href: null }} />
       <Tabs.Screen name="investments/[id]/index" options={{ href: null }} />
       <Tabs.Screen name="support/profile" options={{ href: null }} />

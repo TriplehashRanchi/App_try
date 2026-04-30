@@ -1,6 +1,8 @@
 // components/customer/InvestmentList.jsx
 import { useRouter } from "expo-router";
+import { Download } from "lucide-react-native";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { getAgreementUrl, openAgreement } from "../../utils/agreementDownload";
 import { calculateInvestmentAnalytics } from "../../utils/financeCalculators";
 
 export default function InvestmentList({ investments }) {
@@ -22,6 +24,7 @@ export default function InvestmentList({ investments }) {
 
       {investments.map((inv) => {
         const analytics = calculateInvestmentAnalytics(inv);
+        const agreementUrl = getAgreementUrl(inv);
 
         return (
           <TouchableOpacity
@@ -60,6 +63,20 @@ export default function InvestmentList({ investments }) {
                 {analytics.totalGain >= 0 ? "+" : ""}
                 ₹{analytics.totalGain.toLocaleString("en-IN")}
               </Text>
+              {agreementUrl && (
+                <TouchableOpacity
+                  style={styles.downloadIconButton}
+                  onPress={(event) => {
+                    event?.stopPropagation?.();
+                    openAgreement(inv);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Download agreement"
+                >
+                  <Download size={18} color="#387AFF" strokeWidth={2.4} />
+                  <Text style={styles.downloadText}>Agreement</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </TouchableOpacity>
         );
@@ -87,7 +104,6 @@ padding:20,  // optional but supported on iOS
     paddingVertical: 6,
     backgroundColor: "#fff",
     borderRadius: 20,
-    marginBottom: -10,
     zIndex: 10,
   },
    // 🔵 Zerodha-style chip
@@ -122,6 +138,23 @@ padding:20,  // optional but supported on iOS
   label: { fontSize: 11, color: "#888" },
   value: { fontSize: 15, fontWeight: "700", color: "#111" },
   gain: { fontSize: 14, fontWeight: "600", marginTop: 2 },
+  downloadIconButton: {
+    marginTop: 8,
+    flexDirection: "row",
+    gap: 5,
+    minHeight: 34,
+    paddingHorizontal: 9,
+    borderRadius: 8,
+    backgroundColor: "#EEF4FF",
+    alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "flex-end",
+  },
+  downloadText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#387AFF",
+  },
   empty: { padding: 40, alignItems: "center" },
   emptyText: { color: "#777", fontSize: 16 },
 });
