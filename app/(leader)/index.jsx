@@ -258,6 +258,16 @@ export default function LeaderDashboard() {
           </View>
         )}
 
+        <TouchableOpacity
+          style={[styles.quickBtn, styles.referralQrBtn]}
+          activeOpacity={0.85}
+          onPress={() => router.push("/(leader)/referral-qr")}
+        >
+          <Ionicons name="qr-code-outline" size={18} color="#fff" />
+          <Text style={styles.quickBtnText}>My Referral QR</Text>
+          <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.9)" />
+        </TouchableOpacity>
+
         <TargetTracker refreshTrigger={refreshing} />
 
 
@@ -612,6 +622,13 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
+  },
+  referralQrBtn: {
+    width: "100%",
+    marginRight: 0,
+    marginTop: -6,
+    marginBottom: 20,
+    backgroundColor: "#0EA5E9",
   },
 
   // LIST

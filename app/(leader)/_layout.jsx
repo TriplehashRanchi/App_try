@@ -111,6 +111,7 @@ export default function LeaderLayout() {
       <Tabs.Screen name="add-customer/step3" options={{ href: null }} />
       <Tabs.Screen name="add-customer/UploadSheet" options={{ href: null }} />
       <Tabs.Screen name="customers/CreateInvestmentModal" options={{ href: null }} />
+      <Tabs.Screen name="referral-qr" options={{ href: null }} />
 
     </Tabs>
   );
