@@ -25,6 +25,7 @@ export default function CustomerDetailPage() {
   const [customer, setCustomer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deletingInvestmentId, setDeletingInvestmentId] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -135,6 +136,60 @@ export default function CustomerDetailPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleDeleteInvestment = (investment) => {
+    const status = String(investment?.status || "").toLowerCase();
+
+    if (!["pending", "pending_payment"].includes(status)) {
+      Alert.alert("Not allowed", "Only pending investments can be deleted.");
+      return;
+    }
+
+    Alert.alert(
+      "Delete investment",
+      "Are you sure you want to delete this pending investment?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setDeletingInvestmentId(investment.id);
+              try {
+                await axiosAuth().delete(`/investments/${investment.id}`);
+              } catch (err) {
+                const isMissingDeleteRoute =
+                  err?.response?.status === 404 &&
+                  typeof err?.response?.data === "string" &&
+                  err.response.data.includes("Cannot DELETE");
+
+                if (!isMissingDeleteRoute) {
+                  throw err;
+                }
+
+                await axiosAuth().post(`/investments/${investment.id}/delete`);
+              }
+              await fetchCustomer();
+              Alert.alert("Deleted", "Pending investment deleted successfully.");
+            } catch (err) {
+              console.log("Delete investment error", {
+                status: err?.response?.status,
+                data: err?.response?.data,
+                message: err?.message,
+              });
+              Alert.alert(
+                "Delete failed",
+                err?.response?.data?.message || "Could not delete investment."
+              );
+            } finally {
+              setDeletingInvestmentId(null);
+            }
+          },
+        },
+      ]
+    );
   };
 
   if (loading) {
@@ -549,34 +604,74 @@ export default function CustomerDetailPage() {
             </View>
 
             {customer.investments?.length ? (
-              customer.investments.map((inv) => (
-                <View
-                  key={inv.id}
-                  style={{
-                    backgroundColor: "#fff",
-                    padding: 14,
-                    borderRadius: 12,
-                    marginBottom: 10,
-                    borderWidth: 1,
-                    borderColor: "#e5e7eb",
-                  }}
-                >
-                  <Text style={{ fontWeight: "700", fontSize: 16 }}>
-                    ₹{inv.principalAmount.toLocaleString("en-IN")}
-                  </Text>
-                  <Text style={{ color: "#6b7280" }}>
-                    {inv.type === "fd"
-                      ? "Fixed Deposit"
-                      : inv.type === "rd"
-                      ? "Recurring Deposit"
-                      : "FD+ (10% for 20M)"}
-                  </Text>
+              customer.investments.map((inv) => {
+                const canDeleteInvestment = ["pending", "pending_payment"].includes(
+                  String(inv.status || "").toLowerCase()
+                );
+                const isDeleting = deletingInvestmentId === inv.id;
 
-                  <Text style={{ marginTop: 4, fontSize: 12, color: "#6b7280" }}>
-                    Status: {inv.status}
-                  </Text>
-                </View>
-              ))
+                return (
+                  <View
+                    key={inv.id}
+                    style={{
+                      backgroundColor: "#fff",
+                      padding: 14,
+                      borderRadius: 12,
+                      marginBottom: 10,
+                      borderWidth: 1,
+                      borderColor: "#e5e7eb",
+                    }}
+                  >
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        alignItems: "flex-start",
+                        gap: 12,
+                      }}
+                    >
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontWeight: "700", fontSize: 16 }}>
+                          ₹{inv.principalAmount.toLocaleString("en-IN")}
+                        </Text>
+                        <Text style={{ color: "#6b7280" }}>
+                          {inv.type === "fd"
+                            ? "Fixed Deposit"
+                            : inv.type === "rd"
+                            ? "Recurring Deposit"
+                            : "FD+ (10% for 20M)"}
+                        </Text>
+
+                        <Text style={{ marginTop: 4, fontSize: 12, color: "#6b7280" }}>
+                          Status: {inv.status}
+                        </Text>
+                      </View>
+
+                      {canDeleteInvestment && (
+                        <TouchableOpacity
+                          onPress={() => handleDeleteInvestment(inv)}
+                          disabled={isDeleting}
+                          style={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: 10,
+                            backgroundColor: "#fee2e2",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            opacity: isDeleting ? 0.6 : 1,
+                          }}
+                        >
+                          {isDeleting ? (
+                            <ActivityIndicator size="small" color="#dc2626" />
+                          ) : (
+                            <Feather name="trash-2" size={18} color="#dc2626" />
+                          )}
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  </View>
+                );
+              })
             ) : (
               <Text style={{ color: "#6b7280" }}>No investments yet.</Text>
             )}
