@@ -1,6 +1,4 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Feather } from "@expo/vector-icons";
-import axios from "axios";
 import * as DocumentPicker from "expo-document-picker";
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
@@ -168,11 +166,10 @@ export default function AddInvestmentPage() {
             });
           });
 
-          const token = await AsyncStorage.getItem("rmclub_jwt");
-
-          await axios.post("https://api.rmclub.co/api/payment-proofs", formData, {
+          // Use the authed instance so the proof goes to the SAME backend that
+          // created the investment (otherwise the investmentId won't exist there).
+          await axiosAuth().post("/payment-proofs", formData, {
             headers: {
-              Authorization: `Bearer ${token}`,
               "Content-Type": "multipart/form-data",
             },
             transformRequest: (data) => data,

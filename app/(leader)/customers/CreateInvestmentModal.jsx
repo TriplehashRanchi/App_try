@@ -17,8 +17,6 @@ import {
 } from "react-native";
 
 // Imports needed to bypass the interceptor for file upload
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
 
 export default function CreateInvestmentModal({
   visible,
@@ -152,11 +150,10 @@ export default function CreateInvestmentModal({
             });
           });
           
-          const token = await AsyncStorage.getItem("rmclub_jwt");
-
-          await axios.post("https://api.rmclub.co/api/payment-proofs", formData, {
-            headers: { 
-                "Authorization": `Bearer ${token}`,
+          // Use the authed instance so the proof goes to the SAME backend that
+          // created the investment (otherwise the investmentId won't exist there).
+          await axiosAuth().post("/payment-proofs", formData, {
+            headers: {
                 "Content-Type": "multipart/form-data",
             },
             transformRequest: (data) => data,

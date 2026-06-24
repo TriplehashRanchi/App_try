@@ -1,7 +1,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
+import { STATIC_BASE_URL } from "../context/AuthContext";
 
-export const API_BASE_URL = "https://api.rmclub.co/api";
+// Single source of truth: same host as AuthContext (see HOST there to switch
+// between local testing and production).
+export const API_BASE_URL = `${STATIC_BASE_URL}/api`;
 
 // Global axios instance
 const axiosAuth = axios.create({

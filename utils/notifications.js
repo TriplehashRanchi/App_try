@@ -6,6 +6,13 @@ export async function registerForPushNotificationsAsync() {
   try {
     if (!Device.isDevice) return null;
 
+    // Remote push was removed from Expo Go (SDK 53+). Skip registration there
+    // to avoid the unsupported-API error; use a development build for push.
+    if (Constants.executionEnvironment === "storeClient") {
+      console.log("ℹ️ Skipping push registration in Expo Go");
+      return null;
+    }
+
     // Ask permissions
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;

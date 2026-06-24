@@ -3,7 +3,6 @@ import { Ionicons } from "@expo/vector-icons";
 import {
   launchCameraAsync,
   launchImageLibraryAsync,
-  MediaTypeOptions,
   requestCameraPermissionsAsync,
   requestMediaLibraryPermissionsAsync,
 } from "expo-image-picker";
@@ -53,7 +52,7 @@ export default function UploadSheet({ type, customerId, onClose, onSuccess }) {
           return;
         }
         result = await launchImageLibraryAsync({
-          mediaTypes: MediaTypeOptions.Images,
+          mediaTypes: ["images"],
           allowsEditing: false,
           quality: 0.7,
         });

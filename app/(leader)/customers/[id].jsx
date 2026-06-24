@@ -1,4 +1,5 @@
-import { useAuth } from "@/context/AuthContext";
+import UploadSheet from "@/components/leader/UploadSheet";
+import { STATIC_BASE_URL, useAuth } from "@/context/AuthContext";
 import { Feather } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { router, useLocalSearchParams } from "expo-router";
@@ -26,7 +27,16 @@ export default function CustomerDetailPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deletingInvestmentId, setDeletingInvestmentId] = useState(null);
+  const [editingInvestment, setEditingInvestment] = useState(null);
+  const [editAmount, setEditAmount] = useState("");
+  const [savingAmount, setSavingAmount] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [uploadDocType, setUploadDocType] = useState(null);
+  // Freshly uploaded docs, keyed by upload type (e.g. "aadharFront").
+  // Prefer these over the fetched documents so a re-upload shows instantly,
+  // even if the backend returns a stale/duplicate row for that type.
+  const [uploadedDocs, setUploadedDocs] = useState({});
+  const [uploadedAt, setUploadedAt] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
     firstName: "",
@@ -34,9 +44,11 @@ export default function CustomerDetailPage() {
     email: "",
     phone: "",
     address: "",
+    aadharNumber: "",
+    panNumber: "",
   });
 
-  const staticUrl = "https://api.rmclub.co";
+  const staticUrl = STATIC_BASE_URL;
 
   const syncEditForm = useCallback((data) => {
     setEditForm({
@@ -45,6 +57,8 @@ export default function CustomerDetailPage() {
       email: data?.email || "",
       phone: data?.phone || "",
       address: data?.address || "",
+      aadharNumber: data?.aadharNumber || "",
+      panNumber: data?.panNumber || "",
     });
   }, []);
 
@@ -93,8 +107,8 @@ export default function CustomerDetailPage() {
         phone: editForm.phone.trim(),
         address: editForm.address.trim(),
         phone2: customer.phone2 || "",
-        aadharNumber: customer.aadharNumber || "",
-        panNumber: customer.panNumber || "",
+        aadharNumber: editForm.aadharNumber.trim(),
+        panNumber: editForm.panNumber.trim().toUpperCase(),
         referredByLeaderId: customer.referredByLeaderId || null,
         bankName: customer.bankAccounts?.[0]?.bankName || "",
         accountNumber: customer.bankAccounts?.[0]?.accountNumber || "",
@@ -190,6 +204,61 @@ export default function CustomerDetailPage() {
         },
       ]
     );
+  };
+
+  const openEditInvestment = (investment) => {
+    const status = String(investment?.status || "").toLowerCase();
+    if (!["pending", "pending_payment"].includes(status)) {
+      Alert.alert("Not allowed", "Only pending investments can be edited.");
+      return;
+    }
+    setEditingInvestment(investment);
+    setEditAmount(String(investment.principalAmount ?? ""));
+  };
+
+  const handleSaveAmount = async () => {
+    const amount = Number(editAmount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      Alert.alert("Invalid amount", "Please enter a valid investment amount.");
+      return;
+    }
+
+    try {
+      setSavingAmount(true);
+      try {
+        await axiosAuth().put(`/investments/${editingInvestment.id}/amount`, {
+          principalAmount: amount,
+        });
+      } catch (err) {
+        const isMissingPutRoute =
+          err?.response?.status === 404 &&
+          typeof err?.response?.data === "string" &&
+          err.response.data.includes("Cannot PUT");
+
+        if (!isMissingPutRoute) {
+          throw err;
+        }
+
+        await axiosAuth().post(`/investments/${editingInvestment.id}/amount`, {
+          principalAmount: amount,
+        });
+      }
+      setEditingInvestment(null);
+      await fetchCustomer();
+      Alert.alert("Success", "Investment amount updated.");
+    } catch (err) {
+      console.log("Update investment amount error", {
+        status: err?.response?.status,
+        data: err?.response?.data,
+        message: err?.message,
+      });
+      Alert.alert(
+        "Update failed",
+        err?.response?.data?.message || "Could not update investment amount."
+      );
+    } finally {
+      setSavingAmount(false);
+    }
   };
 
   if (loading) {
@@ -367,6 +436,20 @@ export default function CustomerDetailPage() {
                   keyboardType: "default",
                   multiline: true,
                 },
+                {
+                  key: "aadharNumber",
+                  label: "Aadhar Number",
+                  keyboardType: "numeric",
+                  autoCapitalize: "none",
+                  maxLength: 12,
+                },
+                {
+                  key: "panNumber",
+                  label: "PAN Number",
+                  keyboardType: "default",
+                  autoCapitalize: "characters",
+                  maxLength: 10,
+                },
               ].map((field) => (
                 <View key={field.key} style={{ marginBottom: 14 }}>
                   <Text
@@ -385,6 +468,7 @@ export default function CustomerDetailPage() {
                     placeholder={`Enter ${field.label.toLowerCase()}`}
                     keyboardType={field.keyboardType}
                     autoCapitalize={field.autoCapitalize || "words"}
+                    maxLength={field.maxLength}
                     multiline={field.multiline}
                     textAlignVertical={field.multiline ? "top" : "center"}
                     placeholderTextColor="#9ca3af"
@@ -475,19 +559,21 @@ export default function CustomerDetailPage() {
             </Text>
 
             {[
-              ["Aadhar Front", doc("aadhar_front")?.fileUrl],
-              ["Aadhar Back", doc("aadhar_back")?.fileUrl],
-              ["PAN Card", doc("pan")?.fileUrl],
-              ["Passbook", doc("passbook")?.fileUrl],
-            ].map(([label, url]) => {
-              const fullUrl = url ? `${staticUrl}${url}` : null;
+              ["Aadhar Front", "aadhar_front", "aadharFront"],
+              ["Aadhar Back", "aadhar_back", "aadharBack"],
+              ["PAN Card", "pan", "pan"],
+              ["Passbook", "passbook", "passbook"],
+            ].map(([label, docType, uploadKey]) => {
+              const url = uploadedDocs[uploadKey] || doc(docType)?.fileUrl;
+              // Cache-bust freshly uploaded docs so RN's Image cache can't
+              // serve a previously loaded version of the same path.
+              const cacheBuster = uploadedDocs[uploadKey] ? `?t=${uploadedAt}` : "";
+              const fullUrl = url ? `${staticUrl}${url}${cacheBuster}` : null;
               const fileName = url ? url.split("/").slice(-2).join("/") : null;
 
               return (
-                <TouchableOpacity
+                <View
                   key={label}
-                  onPress={() => fullUrl && setPreviewUrl(fullUrl)}
-                  activeOpacity={0.9}
                   style={{
                     flexDirection: "row",
                     alignItems: "center",
@@ -500,52 +586,109 @@ export default function CustomerDetailPage() {
                     elevation: 2,
                   }}
                 >
-                  <View
+                  <TouchableOpacity
+                    onPress={() => fullUrl && setPreviewUrl(fullUrl)}
+                    activeOpacity={0.9}
                     style={{
-                      width: 55,
-                      height: 55,
-                      borderRadius: 10,
-                      marginRight: 12,
-                      backgroundColor: "#f3f4f6",
-                      overflow: "hidden",
+                      flex: 1,
+                      flexDirection: "row",
+                      alignItems: "center",
                     }}
                   >
-                    {fullUrl ? (
-                      <Image
-                        source={{ uri: fullUrl }}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          resizeMode: "cover",
-                        }}
-                      />
-                    ) : (
-                      <View
-                        style={{
-                          flex: 1,
-                          justifyContent: "center",
-                          alignItems: "center",
-                        }}
-                      >
-                        <Feather name="image" size={22} color="#9ca3af" />
-                      </View>
-                    )}
-                  </View>
+                    <View
+                      style={{
+                        width: 55,
+                        height: 55,
+                        borderRadius: 10,
+                        marginRight: 12,
+                        backgroundColor: "#f3f4f6",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {fullUrl ? (
+                        <Image
+                          source={{ uri: fullUrl }}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            resizeMode: "cover",
+                          }}
+                        />
+                      ) : (
+                        <View
+                          style={{
+                            flex: 1,
+                            justifyContent: "center",
+                            alignItems: "center",
+                          }}
+                        >
+                          <Feather name="image" size={22} color="#9ca3af" />
+                        </View>
+                      )}
+                    </View>
 
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontWeight: "700", fontSize: 16 }}>
-                      {label}
-                    </Text>
-                    <Text style={{ color: "#6b7280", fontSize: 12 }}>
-                      {fileName || "Not uploaded"}
-                    </Text>
-                  </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontWeight: "700", fontSize: 16 }}>
+                        {label}
+                      </Text>
+                      <Text style={{ color: "#6b7280", fontSize: 12 }}>
+                        {fileName || "Not uploaded"}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
 
-                  <Feather name="chevron-right" size={18} color="#9ca3af" />
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setUploadDocType(uploadKey)}
+                    activeOpacity={0.8}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      marginLeft: 10,
+                      paddingHorizontal: 12,
+                      paddingVertical: 8,
+                      borderRadius: 10,
+                      backgroundColor: "#eff6ff",
+                      borderWidth: 1,
+                      borderColor: "#bfdbfe",
+                    }}
+                  >
+                    <Feather
+                      name={url ? "refresh-cw" : "upload"}
+                      size={14}
+                      color="#1d4ed8"
+                    />
+                    <Text
+                      style={{
+                        marginLeft: 6,
+                        color: "#1d4ed8",
+                        fontWeight: "700",
+                        fontSize: 12,
+                      }}
+                    >
+                      {url ? "Re-upload" : "Upload"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               );
             })}
           </View>
+
+          {uploadDocType && (
+            <UploadSheet
+              type={uploadDocType}
+              customerId={id}
+              onClose={() => setUploadDocType(null)}
+              onSuccess={async (type, fileUrl) => {
+                setUploadDocType(null);
+                if (fileUrl) {
+                  setUploadedDocs((prev) => ({ ...prev, [type]: fileUrl }));
+                  setUploadedAt(Date.now());
+                }
+                await fetchCustomer();
+                Alert.alert("Success", "Document uploaded successfully.");
+              }}
+            />
+          )}
 
           <Modal visible={!!previewUrl} transparent animationType="fade">
             <TouchableOpacity
@@ -648,25 +791,43 @@ export default function CustomerDetailPage() {
                       </View>
 
                       {canDeleteInvestment && (
-                        <TouchableOpacity
-                          onPress={() => handleDeleteInvestment(inv)}
-                          disabled={isDeleting}
-                          style={{
-                            width: 36,
-                            height: 36,
-                            borderRadius: 10,
-                            backgroundColor: "#fee2e2",
-                            justifyContent: "center",
-                            alignItems: "center",
-                            opacity: isDeleting ? 0.6 : 1,
-                          }}
-                        >
-                          {isDeleting ? (
-                            <ActivityIndicator size="small" color="#dc2626" />
-                          ) : (
-                            <Feather name="trash-2" size={18} color="#dc2626" />
-                          )}
-                        </TouchableOpacity>
+                        <View style={{ flexDirection: "row", gap: 8 }}>
+                          <TouchableOpacity
+                            onPress={() => openEditInvestment(inv)}
+                            disabled={isDeleting}
+                            style={{
+                              width: 36,
+                              height: 36,
+                              borderRadius: 10,
+                              backgroundColor: "#eff6ff",
+                              justifyContent: "center",
+                              alignItems: "center",
+                              opacity: isDeleting ? 0.6 : 1,
+                            }}
+                          >
+                            <Feather name="edit-2" size={17} color="#1d4ed8" />
+                          </TouchableOpacity>
+
+                          <TouchableOpacity
+                            onPress={() => handleDeleteInvestment(inv)}
+                            disabled={isDeleting}
+                            style={{
+                              width: 36,
+                              height: 36,
+                              borderRadius: 10,
+                              backgroundColor: "#fee2e2",
+                              justifyContent: "center",
+                              alignItems: "center",
+                              opacity: isDeleting ? 0.6 : 1,
+                            }}
+                          >
+                            {isDeleting ? (
+                              <ActivityIndicator size="small" color="#dc2626" />
+                            ) : (
+                              <Feather name="trash-2" size={18} color="#dc2626" />
+                            )}
+                          </TouchableOpacity>
+                        </View>
                       )}
                     </View>
                   </View>
@@ -676,6 +837,110 @@ export default function CustomerDetailPage() {
               <Text style={{ color: "#6b7280" }}>No investments yet.</Text>
             )}
           </View>
+
+          <Modal
+            visible={!!editingInvestment}
+            transparent
+            animationType="fade"
+            onRequestClose={() => !savingAmount && setEditingInvestment(null)}
+          >
+            <KeyboardAvoidingView
+              behavior={Platform.OS === "ios" ? "padding" : undefined}
+              style={{
+                flex: 1,
+                justifyContent: "center",
+                alignItems: "center",
+                backgroundColor: "rgba(0,0,0,0.5)",
+                padding: 24,
+              }}
+            >
+              <View
+                style={{
+                  width: "100%",
+                  backgroundColor: "#fff",
+                  borderRadius: 16,
+                  padding: 20,
+                }}
+              >
+                <Text style={{ fontSize: 18, fontWeight: "800", marginBottom: 4 }}>
+                  Edit Investment Amount
+                </Text>
+                <Text style={{ color: "#6b7280", fontSize: 13, marginBottom: 16 }}>
+                  You can edit the amount only while the investment is pending
+                  admin approval.
+                </Text>
+
+                <Text
+                  style={{
+                    fontSize: 12,
+                    color: "#6b7280",
+                    fontWeight: "700",
+                    marginBottom: 6,
+                  }}
+                >
+                  Investment Amount (₹)
+                </Text>
+                <TextInput
+                  value={editAmount}
+                  onChangeText={setEditAmount}
+                  keyboardType="numeric"
+                  placeholder="Enter amount"
+                  placeholderTextColor="#9ca3af"
+                  style={{
+                    backgroundColor: "#f9fafb",
+                    borderWidth: 1,
+                    borderColor: "#e5e7eb",
+                    borderRadius: 12,
+                    paddingHorizontal: 14,
+                    paddingVertical: 12,
+                    fontSize: 16,
+                    color: "#111827",
+                  }}
+                />
+
+                <View style={{ flexDirection: "row", gap: 10, marginTop: 20 }}>
+                  <TouchableOpacity
+                    onPress={() => setEditingInvestment(null)}
+                    disabled={savingAmount}
+                    style={{
+                      flex: 1,
+                      height: 48,
+                      borderRadius: 12,
+                      borderWidth: 1,
+                      borderColor: "#d1d5db",
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Text style={{ fontWeight: "700", color: "#374151" }}>
+                      Cancel
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={handleSaveAmount}
+                    disabled={savingAmount}
+                    style={{
+                      flex: 1.4,
+                      height: 48,
+                      borderRadius: 12,
+                      justifyContent: "center",
+                      alignItems: "center",
+                      backgroundColor: "#2563eb",
+                    }}
+                  >
+                    {savingAmount ? (
+                      <ActivityIndicator color="#fff" />
+                    ) : (
+                      <Text style={{ fontWeight: "700", color: "#fff" }}>
+                        Save
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </KeyboardAvoidingView>
+          </Modal>
         </ScrollView>
 
         {isEditing && (

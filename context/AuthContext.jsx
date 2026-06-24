@@ -14,9 +14,15 @@ const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
 
 // YOUR BACKEND URL
-const API_BASE_URL = "https://api.rmclub.co/api";
+// Toggle this for local testing vs production.
+//   - Physical device in Expo Go: use your Mac's LAN IP (same Wi-Fi), e.g. http://192.168.1.16:5050
+//   - iOS simulator / web: http://localhost:5050 also works
+//   - Android emulator: http://10.0.2.2:5050
+// ⚠️ Switch back to the production host before shipping.
+const HOST = "http://192.168.1.16:5050"; // prod: "https://api.rmclub.co"
+const API_BASE_URL = `${HOST}/api`;
 
-export const STATIC_BASE_URL = "https://api.rmclub.co";
+export const STATIC_BASE_URL = HOST;
 
 
 const TOKEN_KEY = "rmclub_jwt";
