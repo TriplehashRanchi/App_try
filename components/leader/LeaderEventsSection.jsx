@@ -1,6 +1,7 @@
 import { useAuth } from "@/context/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
 import { useEffect, useState } from "react";
 import {
   Modal,
@@ -13,16 +14,23 @@ import {
 } from "react-native";
 import EventCard from "./EventCard";
 
+dayjs.extend(utc);
+
+// Events are authored in India time. We apply IST's fixed +5:30 offset directly
+// (instead of a named timezone) so it works on React Native's Hermes engine,
+// which doesn't ship full Intl timezone data. This keeps a June-30 event
+// "upcoming" on June 29 regardless of the device's own timezone.
+const IST_OFFSET_MINUTES = 330;
+const toIST = (date) => dayjs.utc(date).utcOffset(IST_OFFSET_MINUTES);
+
 export default function LeaderEventsSection() {
   const { axiosAuth } = useAuth();
 
   const [upcomingEvents, setUpcomingEvents] = useState([]);
-  const [completedEvents, setCompletedEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [selectedEvents, setSelectedEvents] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
-  const [completedModalVisible, setCompletedModalVisible] = useState(false);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -30,18 +38,13 @@ export default function LeaderEventsSection() {
         const res = await axiosAuth().get("/events");
         const rawEvents = res?.data?.data || res?.data || [];
 
-        const today = dayjs().startOf("day");
+        const today = toIST().startOf("day");
+        const eventDay = (e) => toIST(e.date).startOf("day");
 
-        const upcoming = rawEvents.filter((e) =>
-          dayjs(e.date).endOf("day").isAfter(today)
-        );
-
-        const completed = rawEvents.filter((e) =>
-          dayjs(e.date).endOf("day").isBefore(today)
-        );
+        // Today's and future events are upcoming.
+        const upcoming = rawEvents.filter((e) => !eventDay(e).isBefore(today));
 
         setUpcomingEvents(upcoming);
-        setCompletedEvents(completed);
       } catch (err) {
         console.log("❌ Events fetch error:", err?.response || err);
       } finally {
@@ -54,7 +57,7 @@ export default function LeaderEventsSection() {
 
   const groupByDate = (events) => {
     return events.reduce((acc, event) => {
-      const key = dayjs(event.date).format("YYYY-MM-DD");
+      const key = toIST(event.date).format("YYYY-MM-DD");
       if (!acc[key]) acc[key] = [];
       acc[key].push(event);
       return acc;
@@ -87,20 +90,6 @@ export default function LeaderEventsSection() {
       <View style={styles.section}>
         <Chip title="Upcoming Events" />
 
-        {/* History Icon */}
-        {completedEvents.length > 0 && (
-          <View style={styles.headerRow}>
-            <TouchableOpacity
-              onPress={() => setCompletedModalVisible(true)}
-              activeOpacity={0.7}
-              style={styles.historyBtn}
-            >
-              <Ionicons name="time-outline" size={16} color="#6B7280" />
-              <Text style={styles.historyText}>Completed</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
         {/* Upcoming Events */}
         {topDates.map((dateKey) => {
           const dateEvents = groupedUpcoming[dateKey];
@@ -128,14 +117,6 @@ export default function LeaderEventsSection() {
         title="Events"
         events={selectedEvents}
         onClose={() => setModalVisible(false)}
-      />
-
-      {/* ⚪ COMPLETED EVENTS MODAL */}
-      <EventModal
-        visible={completedModalVisible}
-        title="Completed Events"
-        events={completedEvents}
-        onClose={() => setCompletedModalVisible(false)}
       />
     </>
   );
@@ -197,20 +178,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "800",
     color: "#111827",
-  },
-  headerRow: {
-    alignItems: "flex-end",
-    marginBottom: 8,
-  },
-  historyBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  historyText: {
-    fontSize: 12,
-    color: "#6B7280",
-    fontWeight: "700",
   },
   emptyText: {
     textAlign: "center",

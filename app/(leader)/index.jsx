@@ -70,7 +70,6 @@ export default function LeaderDashboard() {
   const [summary, setSummary] = useState(null);
   const [investmentSummary, setInvestmentSummary] = useState(null);
   const [offers, setOffers] = useState([]);
-  const [targets, setTargets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [currentBanner, setCurrentBanner] = useState(0);
@@ -79,23 +78,14 @@ export default function LeaderDashboard() {
   const fetchData = useCallback(async () => {
     if (!user) return;
     try {
-      const targetPromise = axiosAuth()
-        .get(`/targets/user/my`)
-        .catch((err) => {
-          console.log("Leader targets fetch error:", err?.response || err);
-          return { data: [] };
-        });
-
-      const [dashboardRes, investmentRes, offerRes, targetRes] = await Promise.all([
+      const [dashboardRes, investmentRes, offerRes] = await Promise.all([
         axiosAuth().get(`/leaders/${user.id}/dashboard-summary`),
         axiosAuth().get(`/leaders/${user.id}/investments-summary`),
         axiosAuth().get(`/offer-banners`),
-        targetPromise,
       ]);
       setSummary(dashboardRes.data);
       setInvestmentSummary(investmentRes.data);
       setOffers(offerRes.data || []);
-      setTargets(targetRes?.data || []);
     } catch (e) {
       console.log("Dashboard Error:", e);
     } finally {
@@ -164,50 +154,6 @@ export default function LeaderDashboard() {
             <View style={styles.badge} />
           </TouchableOpacity> */}
         </View>
-
-        {/* ACTIVE TARGETS */}
-        {targets?.length ? (
-          <View style={styles.targetSection}>
-            <View style={styles.targetHeader}>
-              <Text style={styles.targetTitle}>Your Targets</Text>
-              <Text style={styles.targetCount}>{targets.length} active</Text>
-            </View>
-            {targets.map((t) => {
-              const progress = Math.min(t?.progress || 0, 150);
-              const remaining = Math.max((t?.targetAmount || 0) - (t?.achievedAmount || 0), 0);
-              const achieved = t?.status === "achieved";
-              return (
-                <View key={t.id} style={styles.targetCard}>
-                  <View style={styles.targetTopRow}>
-                    <Text style={styles.targetLabel}>
-                      {t.targetType === "leader" ? "Team Target" : "Customer Target"}
-                    </Text>
-                    <Text style={[styles.targetStatus, achieved ? styles.statusAchieved : styles.statusPending]}>
-                      {achieved ? "Achieved" : "In Progress"}
-                    </Text>
-                  </View>
-                  <Text style={styles.targetAmount}>
-                    ₹{(t.targetAmount || 0).toLocaleString("en-IN")}
-                  </Text>
-                  <Text style={styles.targetMeta}>
-                    {achieved ? "Completed" : `₹${remaining.toLocaleString("en-IN")} to go`}
-                    {t.daysLeft !== undefined ? ` • ${t.daysLeft} day${t.daysLeft === 1 ? "" : "s"} left` : ""}
-                  </Text>
-                  {t.rewardDescription ? (
-                    <Text style={styles.rewardText}>{t.rewardDescription}</Text>
-                  ) : null}
-                  <View style={styles.progressTrack}>
-                    <View style={[styles.progressFill, { width: `${Math.min(progress, 100)}%` }]} />
-                  </View>
-                  <Text style={styles.progressText}>
-                    {Math.round(progress)}% • ₹{(t.achievedAmount || 0).toLocaleString("en-IN")} / ₹
-                    {(t.targetAmount || 0).toLocaleString("en-IN")}
-                  </Text>
-                </View>
-              );
-            })}
-          </View>
-        ) : null}
 
         {/* PRIMARY EARNINGS CARD */}
         <PrimaryStatCard

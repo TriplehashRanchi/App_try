@@ -1,9 +1,15 @@
 import { Ionicons } from "@expo/vector-icons";
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
 import { StyleSheet, Text, View } from "react-native";
 
+dayjs.extend(utc);
+
 export default function EventCard({ event, extraCount = 0 }) {
-  const date = dayjs(event.date);
+  // Events are authored in India time — render the date with IST's fixed +5:30
+  // offset (works on Hermes, which lacks full Intl timezone data) so the day
+  // shown matches how it was scheduled regardless of the device's timezone.
+  const date = dayjs.utc(event.date).utcOffset(330);
 
   return (
     <View style={styles.card}>
