@@ -3,8 +3,8 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
 export default function LeaderPerformance({ customers, investments }) {
-  if (!customers?.length) return null;
   const router = useRouter();
+  if (!customers?.length) return null;
 
   const leaders = {};
 

@@ -19,6 +19,24 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+const editableInvestmentTypes = [
+  { key: "fd", label: "FD" },
+  { key: "rd", label: "RD" },
+  { key: "fd_plus", label: "FD Plus" },
+];
+
+const toDateInput = (value) => {
+  if (!value) return new Date().toISOString().split("T")[0];
+  return String(value).split("T")[0];
+};
+
+const toPercentInput = (value) => {
+  if (value === null || value === undefined || value === "") return "";
+  const rate = Number(value);
+  if (!Number.isFinite(rate)) return "";
+  return String(rate <= 1 ? rate * 100 : rate);
+};
+
 export default function CustomerDetailPage() {
   const { id } = useLocalSearchParams();
   const { axiosAuth } = useAuth();
@@ -28,8 +46,15 @@ export default function CustomerDetailPage() {
   const [saving, setSaving] = useState(false);
   const [deletingInvestmentId, setDeletingInvestmentId] = useState(null);
   const [editingInvestment, setEditingInvestment] = useState(null);
-  const [editAmount, setEditAmount] = useState("");
-  const [savingAmount, setSavingAmount] = useState(false);
+  const [editInvestmentForm, setEditInvestmentForm] = useState({
+    type: "fd",
+    principalAmount: "",
+    startDate: "",
+    interestRate: "",
+    lockInPeriodMonths: "",
+    rdPeriodMonths: "",
+  });
+  const [savingInvestment, setSavingInvestment] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [uploadDocType, setUploadDocType] = useState(null);
   // Freshly uploaded docs, keyed by upload type (e.g. "aadharFront").
@@ -213,51 +238,93 @@ export default function CustomerDetailPage() {
       return;
     }
     setEditingInvestment(investment);
-    setEditAmount(String(investment.principalAmount ?? ""));
+    setEditInvestmentForm({
+      type: investment.type || "fd",
+      principalAmount: String(investment.principalAmount ?? ""),
+      startDate: toDateInput(investment.startDate || investment.activationDate),
+      interestRate: toPercentInput(investment.interestRate),
+      lockInPeriodMonths: String(investment.lockInPeriodMonths ?? ""),
+      rdPeriodMonths: String(investment.rdPeriodMonths ?? ""),
+    });
   };
 
-  const handleSaveAmount = async () => {
-    const amount = Number(editAmount);
+  const updateInvestmentField = (key, value) => {
+    setEditInvestmentForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleSaveInvestment = async () => {
+    const amount = Number(editInvestmentForm.principalAmount);
     if (!Number.isFinite(amount) || amount <= 0) {
       Alert.alert("Invalid amount", "Please enter a valid investment amount.");
       return;
     }
 
-    try {
-      setSavingAmount(true);
-      try {
-        await axiosAuth().put(`/investments/${editingInvestment.id}/amount`, {
-          principalAmount: amount,
-        });
-      } catch (err) {
-        const isMissingPutRoute =
-          err?.response?.status === 404 &&
-          typeof err?.response?.data === "string" &&
-          err.response.data.includes("Cannot PUT");
+    if (!editInvestmentForm.startDate.trim()) {
+      Alert.alert("Missing date", "Please enter a start date.");
+      return;
+    }
 
-        if (!isMissingPutRoute) {
-          throw err;
-        }
+    const payload = {
+      type: editInvestmentForm.type,
+      principalAmount: amount,
+      startDate: editInvestmentForm.startDate.trim(),
+    };
 
-        await axiosAuth().post(`/investments/${editingInvestment.id}/amount`, {
-          principalAmount: amount,
-        });
+    if (editInvestmentForm.type === "fd") {
+      const interestRate = Number(editInvestmentForm.interestRate);
+      const lockInPeriodMonths = Number(editInvestmentForm.lockInPeriodMonths);
+
+      if (
+        !Number.isFinite(interestRate) ||
+        interestRate <= 0 ||
+        !Number.isFinite(lockInPeriodMonths) ||
+        lockInPeriodMonths <= 0
+      ) {
+        Alert.alert("Missing details", "FD requires interest rate and lock-in.");
+        return;
       }
+
+      payload.interestRate = interestRate / 100;
+      payload.lockInPeriodMonths = lockInPeriodMonths;
+      payload.interestPayoutFrequency = "monthly";
+    }
+
+    if (editInvestmentForm.type === "rd") {
+      const interestRate = Number(editInvestmentForm.interestRate);
+      const rdPeriodMonths = Number(editInvestmentForm.rdPeriodMonths);
+
+      if (
+        !Number.isFinite(interestRate) ||
+        interestRate <= 0 ||
+        !Number.isFinite(rdPeriodMonths) ||
+        rdPeriodMonths <= 0
+      ) {
+        Alert.alert("Missing details", "RD requires interest rate and duration.");
+        return;
+      }
+
+      payload.interestRate = interestRate / 100;
+      payload.rdPeriodMonths = rdPeriodMonths;
+    }
+
+    try {
+      setSavingInvestment(true);
+      await axiosAuth().post(`/investments/${editingInvestment.id}/edit`, payload);
       setEditingInvestment(null);
       await fetchCustomer();
-      Alert.alert("Success", "Investment amount updated.");
+      Alert.alert("Success", "Investment updated.");
     } catch (err) {
-      console.log("Update investment amount error", {
+      console.log("Update investment error", {
         status: err?.response?.status,
         data: err?.response?.data,
         message: err?.message,
       });
       Alert.alert(
         "Update failed",
-        err?.response?.data?.message || "Could not update investment amount."
+        err?.response?.data?.message || "Could not update investment."
       );
     } finally {
-      setSavingAmount(false);
+      setSavingInvestment(false);
     }
   };
 
@@ -842,7 +909,7 @@ export default function CustomerDetailPage() {
             visible={!!editingInvestment}
             transparent
             animationType="fade"
-            onRequestClose={() => !savingAmount && setEditingInvestment(null)}
+            onRequestClose={() => !savingInvestment && setEditingInvestment(null)}
           >
             <KeyboardAvoidingView
               behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -851,24 +918,72 @@ export default function CustomerDetailPage() {
                 justifyContent: "center",
                 alignItems: "center",
                 backgroundColor: "rgba(0,0,0,0.5)",
-                padding: 24,
+                padding: 18,
               }}
             >
               <View
                 style={{
                   width: "100%",
+                  maxHeight: "88%",
                   backgroundColor: "#fff",
                   borderRadius: 16,
-                  padding: 20,
+                  overflow: "hidden",
                 }}
               >
+                <ScrollView
+                  contentContainerStyle={{ padding: 20 }}
+                  keyboardShouldPersistTaps="handled"
+                  showsVerticalScrollIndicator={false}
+                >
                 <Text style={{ fontSize: 18, fontWeight: "800", marginBottom: 4 }}>
-                  Edit Investment Amount
+                  Edit Investment
                 </Text>
                 <Text style={{ color: "#6b7280", fontSize: 13, marginBottom: 16 }}>
-                  You can edit the amount only while the investment is pending
-                  admin approval.
+                  Pending investments can be fully edited before admin approval.
                 </Text>
+
+                <Text
+                  style={{
+                    fontSize: 12,
+                    color: "#6b7280",
+                    fontWeight: "700",
+                    marginBottom: 8,
+                  }}
+                >
+                  Plan Type
+                </Text>
+                <View style={{ flexDirection: "row", gap: 8, marginBottom: 14 }}>
+                  {editableInvestmentTypes.map((plan) => {
+                    const active = editInvestmentForm.type === plan.key;
+                    return (
+                      <TouchableOpacity
+                        key={plan.key}
+                        onPress={() => updateInvestmentField("type", plan.key)}
+                        disabled={savingInvestment}
+                        style={{
+                          flex: 1,
+                          height: 42,
+                          borderRadius: 12,
+                          borderWidth: 1,
+                          borderColor: active ? "#2563eb" : "#d1d5db",
+                          backgroundColor: active ? "#eff6ff" : "#fff",
+                          justifyContent: "center",
+                          alignItems: "center",
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: active ? "#1d4ed8" : "#374151",
+                            fontWeight: "800",
+                            fontSize: 12,
+                          }}
+                        >
+                          {plan.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
 
                 <Text
                   style={{
@@ -878,11 +993,15 @@ export default function CustomerDetailPage() {
                     marginBottom: 6,
                   }}
                 >
-                  Investment Amount (₹)
+                  {editInvestmentForm.type === "rd"
+                    ? "Monthly Installment (₹)"
+                    : "Principal Amount (₹)"}
                 </Text>
                 <TextInput
-                  value={editAmount}
-                  onChangeText={setEditAmount}
+                  value={editInvestmentForm.principalAmount}
+                  onChangeText={(value) =>
+                    updateInvestmentField("principalAmount", value)
+                  }
                   keyboardType="numeric"
                   placeholder="Enter amount"
                   placeholderTextColor="#9ca3af"
@@ -898,10 +1017,143 @@ export default function CustomerDetailPage() {
                   }}
                 />
 
+                <Text
+                  style={{
+                    fontSize: 12,
+                    color: "#6b7280",
+                    fontWeight: "700",
+                    marginTop: 14,
+                    marginBottom: 6,
+                  }}
+                >
+                  Start Date
+                </Text>
+                <TextInput
+                  value={editInvestmentForm.startDate}
+                  onChangeText={(value) => updateInvestmentField("startDate", value)}
+                  placeholder="YYYY-MM-DD"
+                  placeholderTextColor="#9ca3af"
+                  style={{
+                    backgroundColor: "#f9fafb",
+                    borderWidth: 1,
+                    borderColor: "#e5e7eb",
+                    borderRadius: 12,
+                    paddingHorizontal: 14,
+                    paddingVertical: 12,
+                    fontSize: 16,
+                    color: "#111827",
+                  }}
+                />
+
+                {editInvestmentForm.type !== "fd_plus" && (
+                  <>
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        color: "#6b7280",
+                        fontWeight: "700",
+                        marginTop: 14,
+                        marginBottom: 6,
+                      }}
+                    >
+                      Interest Rate (%)
+                    </Text>
+                    <TextInput
+                      value={editInvestmentForm.interestRate}
+                      onChangeText={(value) =>
+                        updateInvestmentField("interestRate", value)
+                      }
+                      keyboardType="numeric"
+                      placeholder="12"
+                      placeholderTextColor="#9ca3af"
+                      style={{
+                        backgroundColor: "#f9fafb",
+                        borderWidth: 1,
+                        borderColor: "#e5e7eb",
+                        borderRadius: 12,
+                        paddingHorizontal: 14,
+                        paddingVertical: 12,
+                        fontSize: 16,
+                        color: "#111827",
+                      }}
+                    />
+                  </>
+                )}
+
+                {editInvestmentForm.type === "fd" && (
+                  <>
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        color: "#6b7280",
+                        fontWeight: "700",
+                        marginTop: 14,
+                        marginBottom: 6,
+                      }}
+                    >
+                      Lock-in Period (Months)
+                    </Text>
+                    <TextInput
+                      value={editInvestmentForm.lockInPeriodMonths}
+                      onChangeText={(value) =>
+                        updateInvestmentField("lockInPeriodMonths", value)
+                      }
+                      keyboardType="numeric"
+                      placeholder="12"
+                      placeholderTextColor="#9ca3af"
+                      style={{
+                        backgroundColor: "#f9fafb",
+                        borderWidth: 1,
+                        borderColor: "#e5e7eb",
+                        borderRadius: 12,
+                        paddingHorizontal: 14,
+                        paddingVertical: 12,
+                        fontSize: 16,
+                        color: "#111827",
+                      }}
+                    />
+                  </>
+                )}
+
+                {editInvestmentForm.type === "rd" && (
+                  <>
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        color: "#6b7280",
+                        fontWeight: "700",
+                        marginTop: 14,
+                        marginBottom: 6,
+                      }}
+                    >
+                      Duration (Months)
+                    </Text>
+                    <TextInput
+                      value={editInvestmentForm.rdPeriodMonths}
+                      onChangeText={(value) =>
+                        updateInvestmentField("rdPeriodMonths", value)
+                      }
+                      keyboardType="numeric"
+                      placeholder="12"
+                      placeholderTextColor="#9ca3af"
+                      style={{
+                        backgroundColor: "#f9fafb",
+                        borderWidth: 1,
+                        borderColor: "#e5e7eb",
+                        borderRadius: 12,
+                        paddingHorizontal: 14,
+                        paddingVertical: 12,
+                        fontSize: 16,
+                        color: "#111827",
+                      }}
+                    />
+                  </>
+                )}
+
                 <View style={{ flexDirection: "row", gap: 10, marginTop: 20 }}>
                   <TouchableOpacity
                     onPress={() => setEditingInvestment(null)}
-                    disabled={savingAmount}
+                    disabled={savingInvestment}
                     style={{
                       flex: 1,
                       height: 48,
@@ -918,8 +1170,8 @@ export default function CustomerDetailPage() {
                   </TouchableOpacity>
 
                   <TouchableOpacity
-                    onPress={handleSaveAmount}
-                    disabled={savingAmount}
+                    onPress={handleSaveInvestment}
+                    disabled={savingInvestment}
                     style={{
                       flex: 1.4,
                       height: 48,
@@ -929,7 +1181,7 @@ export default function CustomerDetailPage() {
                       backgroundColor: "#2563eb",
                     }}
                   >
-                    {savingAmount ? (
+                    {savingInvestment ? (
                       <ActivityIndicator color="#fff" />
                     ) : (
                       <Text style={{ fontWeight: "700", color: "#fff" }}>
@@ -938,6 +1190,7 @@ export default function CustomerDetailPage() {
                     )}
                   </TouchableOpacity>
                 </View>
+                </ScrollView>
               </View>
             </KeyboardAvoidingView>
           </Modal>

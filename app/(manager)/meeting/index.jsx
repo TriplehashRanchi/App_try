@@ -277,6 +277,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
 
+  filterScroll: {
+    paddingHorizontal: 4,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+
   filterChip: {
     paddingVertical: 6,
     paddingHorizontal: 16,
@@ -357,32 +364,5 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 14,
     fontWeight: "700",
-  },
-  filterScroll: {
-    paddingHorizontal: 4,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  }, 
-
-  filterChip: {
-    paddingVertical: 6,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    backgroundColor: "#E5E7EB",
-  },
-
-  filterChipActive: {
-    backgroundColor: "#387AFF",
-  },
-
-  filterText: {
-    fontSize: 13,
-    fontWeight: "500",
-    color: "#374151",
-  },
-
-  filterTextActive: {
-    color: "#FFF",
   },
 });

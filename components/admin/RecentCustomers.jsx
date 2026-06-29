@@ -3,8 +3,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
 export default function RecentCustomers({ customers }) {
-  if (!customers?.length) return null;
   const router = useRouter();
+  if (!customers?.length) return null;
   const recent = [...customers]
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
     .slice(0, 5);

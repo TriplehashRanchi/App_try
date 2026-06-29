@@ -3,8 +3,8 @@ import { FontAwesome5 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
 export default function TodaysInvestments({ investments }) {
-  if (!investments?.length) return null;
   const router = useRouter();
+  if (!investments?.length) return null;
   const today = new Date().toDateString();
 
   const todaysList = investments.filter((inv) => {
@@ -17,7 +17,7 @@ export default function TodaysInvestments({ investments }) {
   return (
     <View style={styles.container}>
       <View style={styles.chip}>
-        <Text style={styles.chipText}>Today's Investments</Text>
+        <Text style={styles.chipText}>Today&apos;s Investments</Text>
       </View>
       {todaysList.map((inv, index) => (
         <TouchableOpacity

@@ -2,7 +2,7 @@ export default {
   expo: {
     name: "Rm Club",
     slug: "rm-club",
-    version: "1.0.0",
+    version: "1.0.7",
     orientation: "portrait",
     icon: "./assets/images/icon.png",
     scheme: "myapp",
@@ -18,8 +18,8 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: "co.rmclubranchi.app",
-      buildNumber: "1.0.0",
       infoPlist: {
+        ITSAppUsesNonExemptEncryption: false,
         NSCameraUsageDescription: "This app uses the camera to scan QR codes.",
         NSPhotoLibraryUsageDescription: "This app needs access to your photo library to select profile pictures."
       }

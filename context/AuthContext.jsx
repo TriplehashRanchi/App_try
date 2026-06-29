@@ -19,7 +19,7 @@ export const useAuth = () => useContext(AuthContext);
 //   - iOS simulator / web: http://localhost:5050 also works
 //   - Android emulator: http://10.0.2.2:5050
 // ⚠️ Switch back to the production host before shipping.
-const HOST = "http://192.168.1.16:5050"; // prod: "https://api.rmclub.co"
+const HOST = "https://api.rmclub.co";
 const API_BASE_URL = `${HOST}/api`;
 
 export const STATIC_BASE_URL = HOST;
