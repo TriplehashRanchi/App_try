@@ -1,7 +1,10 @@
 import { Feather } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as DocumentPicker from "expo-document-picker";
+import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
+import * as ImagePicker from "expo-image-picker";
 import { router, useLocalSearchParams } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -53,6 +56,18 @@ export default function AddInvestmentPage() {
   const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
   const [transactionId, setTransactionId] = useState("");
   const [proofFiles, setProofFiles] = useState([]);
+  const [capturing, setCapturing] = useState(false);
+  // Becomes true once any saved draft + recovered photo has been restored.
+  // We only start persisting the draft after this, so the empty initial state
+  // can't overwrite a real draft during the first render.
+  const [hydrated, setHydrated] = useState(false);
+
+  // Draft is keyed per customer so each customer's in-progress form is separate.
+  const draftKey = customerId ? `inv_draft_${customerId}` : null;
+
+  const clearDraft = () => {
+    if (draftKey) AsyncStorage.removeItem(draftKey).catch(() => {});
+  };
 
   const resetForm = () => {
     setType("fd");
@@ -64,6 +79,7 @@ export default function AddInvestmentPage() {
     setPaymentMethod("bank_transfer");
     setTransactionId("");
     setProofFiles([]);
+    clearDraft();
   };
 
   const pickDocument = async () => {
@@ -80,6 +96,174 @@ export default function AddInvestmentPage() {
     } catch (err) {
       console.log("Picker Error:", err);
       Alert.alert("Upload failed", "Could not open the document picker.");
+    }
+  };
+
+  // Downscale + compress a captured photo before keeping it. Full-resolution
+  // camera images are huge and the memory pressure is what makes Android kill
+  // and relaunch the app when returning from the camera. Capping the size keeps
+  // memory + the upload payload small and avoids those restarts/crashes.
+  const compressPhoto = async (asset, index) => {
+    try {
+      let uri = asset.uri;
+      // Only resize when the photo is genuinely large (avoids upscaling).
+      if (asset.width && asset.width > 1600) {
+        const rendered = await ImageManipulator.manipulate(asset.uri)
+          .resize({ width: 1600 })
+          .renderAsync();
+        const saved = await rendered.saveAsync({
+          compress: 0.6,
+          format: SaveFormat.JPEG,
+        });
+        uri = saved.uri;
+      }
+      return {
+        uri,
+        name: `camera-proof-${Date.now()}-${index + 1}.jpg`,
+        mimeType: "image/jpeg",
+      };
+    } catch (err) {
+      console.log("Compress Error:", err);
+      // Fall back to the original capture if compression fails.
+      return {
+        uri: asset.uri,
+        name: asset.fileName || `camera-proof-${Date.now()}-${index + 1}.jpg`,
+        size: asset.fileSize,
+        mimeType: asset.mimeType || "image/jpeg",
+      };
+    }
+  };
+
+  // On mount: restore any saved draft, then recover a photo that was captured
+  // right before Android killed & relaunched the app (the "app reopens and the
+  // photo is gone" case). getPendingResultAsync returns that lost capture.
+  useEffect(() => {
+    let active = true;
+
+    const init = async () => {
+      let restoredProofs = [];
+
+      if (draftKey) {
+        try {
+          const raw = await AsyncStorage.getItem(draftKey);
+          if (raw && active) {
+            const d = JSON.parse(raw);
+            if (d.type) setType(d.type);
+            if (d.principalAmount != null) setPrincipalAmount(d.principalAmount);
+            if (d.interestRate != null) setInterestRate(d.interestRate);
+            if (d.startDate) setStartDate(d.startDate);
+            if (d.lockIn != null) setLockIn(d.lockIn);
+            if (d.rdMonths != null) setRdMonths(d.rdMonths);
+            if (d.paymentMethod) setPaymentMethod(d.paymentMethod);
+            if (d.transactionId != null) setTransactionId(d.transactionId);
+            if (Array.isArray(d.proofFiles)) restoredProofs = d.proofFiles;
+          }
+        } catch (err) {
+          console.log("Draft restore error:", err);
+        }
+      }
+
+      const recovered = [];
+      try {
+        const pending = await ImagePicker.getPendingResultAsync();
+        const results = Array.isArray(pending) ? pending : [pending];
+        for (const r of results) {
+          if (r && !r.canceled && r.assets?.length > 0) {
+            const processed = await Promise.all(
+              r.assets.map((asset, index) => compressPhoto(asset, index))
+            );
+            recovered.push(...processed);
+          }
+        }
+      } catch (err) {
+        console.log("Pending result recovery error:", err);
+      }
+
+      if (!active) return;
+      if (restoredProofs.length > 0 || recovered.length > 0) {
+        setProofFiles([...restoredProofs, ...recovered]);
+      }
+      setHydrated(true);
+    };
+
+    init();
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Persist the in-progress form so it survives an Android restart while the
+  // camera is open. Debounced; only runs after the initial hydrate.
+  useEffect(() => {
+    if (!hydrated || !draftKey) return;
+
+    const draft = {
+      type,
+      principalAmount,
+      interestRate,
+      startDate,
+      lockIn,
+      rdMonths,
+      paymentMethod,
+      transactionId,
+      proofFiles,
+    };
+
+    const timer = setTimeout(() => {
+      AsyncStorage.setItem(draftKey, JSON.stringify(draft)).catch(() => {});
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [
+    hydrated,
+    draftKey,
+    type,
+    principalAmount,
+    interestRate,
+    startDate,
+    lockIn,
+    rdMonths,
+    paymentMethod,
+    transactionId,
+    proofFiles,
+  ]);
+
+  const takePhoto = async () => {
+    // Guard against double taps opening the camera twice.
+    if (capturing) return;
+
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Camera permission needed",
+          "Please allow camera access to capture the payment proof."
+        );
+        return;
+      }
+
+      setCapturing(true);
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ["images"],
+        quality: 0.6,
+        exif: false,
+      });
+
+      if (!result.canceled && result.assets?.length > 0) {
+        // Normalise to the same shape DocumentPicker returns so the rendering
+        // + upload code can treat both sources identically.
+        const processed = await Promise.all(
+          result.assets.map((asset, index) => compressPhoto(asset, index))
+        );
+        setProofFiles((prev) => [...prev, ...processed]);
+      }
+    } catch (err) {
+      console.log("Camera Error:", err);
+      Alert.alert("Camera failed", "Could not capture the photo. Please try again.");
+    } finally {
+      setCapturing(false);
     }
   };
 
@@ -458,6 +642,28 @@ export default function AddInvestmentPage() {
               </View>
             </TouchableOpacity>
 
+            <View style={styles.orRow}>
+              <View style={styles.orLine} />
+              <Text style={styles.orText}>OR</Text>
+              <View style={styles.orLine} />
+            </View>
+
+            <TouchableOpacity
+              onPress={takePhoto}
+              activeOpacity={0.85}
+              disabled={capturing}
+              style={[styles.cameraBtn, capturing && { opacity: 0.6 }]}
+            >
+              {capturing ? (
+                <ActivityIndicator color="#2563eb" />
+              ) : (
+                <>
+                  <Feather name="camera" size={18} color="#2563eb" />
+                  <Text style={styles.cameraBtnText}>Take photo with camera</Text>
+                </>
+              )}
+            </TouchableOpacity>
+
             {proofFiles.length > 0 && (
               <View style={styles.fileList}>
                 {proofFiles.map((file, index) => (
@@ -804,6 +1010,38 @@ const styles = StyleSheet.create({
     color: "#2563eb",
     marginTop: 8,
     fontWeight: "700",
+  },
+  orRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginVertical: 12,
+  },
+  orLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#e2e8f0",
+  },
+  orText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#94a3b8",
+  },
+  cameraBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    minHeight: 50,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: "#bfdbfe",
+    backgroundColor: "#eff6ff",
+  },
+  cameraBtnText: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#1e3a8a",
   },
   fileList: {
     marginTop: 12,

@@ -1,7 +1,9 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 
-export const API_BASE_URL = "https://api.rmclub.co/api";
+// Keep this in sync with HOST in context/AuthContext.jsx.
+// Physical device: use your Mac's current LAN IP. localhost only works on simulator/web.
+export const API_BASE_URL = "http://192.168.1.19:5050/api";
 
 // Global axios instance
 const axiosAuth = axios.create({
